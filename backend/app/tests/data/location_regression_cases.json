@@ -1,0 +1,112 @@
+[
+  {
+    "id": "REG-001",
+    "location_name": "Joshimath, Uttarakhand",
+    "latitude": 30.56,
+    "longitude": 79.56,
+    "hazard_focus": "Mountain terrain / landslide / Garhwal pilot",
+    "expected_seismic_zone": "ZONE_V",
+    "expected_min_risk_level": "VERY HIGH",
+    "expected_max_risk_level": "CRITICAL",
+    "test_type": "REGRESSION_PILOT_HIGH_RISK"
+  },
+  {
+    "id": "REG-002",
+    "location_name": "Wayanad, Kerala",
+    "latitude": 11.60,
+    "longitude": 76.10,
+    "hazard_focus": "High Western Ghats slope / landslide / heavy rainfall",
+    "expected_seismic_zone": "ZONE_III",
+    "expected_min_risk_level": "MODERATE",
+    "expected_max_risk_level": "HIGH",
+    "test_type": "REGRESSION_LANDSLIDE_SENSITIVITY"
+  },
+  {
+    "id": "REG-003",
+    "location_name": "Supaul, Bihar",
+    "latitude": 26.13,
+    "longitude": 86.60,
+    "hazard_focus": "Kosi river flood plain / Seismic Zone V",
+    "expected_seismic_zone": "ZONE_V",
+    "expected_min_risk_level": "HIGH",
+    "expected_max_risk_level": "CRITICAL",
+    "test_type": "REGRESSION_FLOOD_SEISMIC"
+  },
+  {
+    "id": "REG-004",
+    "location_name": "Darbhanga, Bihar",
+    "latitude": 26.15,
+    "longitude": 85.90,
+    "hazard_focus": "North Bihar flood plain / high population exposure",
+    "expected_seismic_zone": "ZONE_V",
+    "expected_min_risk_level": "HIGH",
+    "expected_max_risk_level": "VERY HIGH",
+    "test_type": "REGRESSION_FLOOD_PLAIN"
+  },
+  {
+    "id": "REG-005",
+    "location_name": "Musi River, Hyderabad",
+    "latitude": 17.37,
+    "longitude": 78.48,
+    "hazard_focus": "Urban flood corridor / Musi river proximity",
+    "expected_seismic_zone": "ZONE_II",
+    "expected_min_risk_level": "MODERATE",
+    "expected_max_risk_level": "HIGH",
+    "test_type": "REGRESSION_URBAN_RIVER"
+  },
+  {
+    "id": "REG-006",
+    "location_name": "Rajamahendravaram, Andhra Pradesh",
+    "latitude": 17.00,
+    "longitude": 81.78,
+    "hazard_focus": "Godavari floodplain / coastal storm influence",
+    "expected_seismic_zone": "ZONE_III",
+    "expected_min_risk_level": "MODERATE",
+    "expected_max_risk_level": "HIGH",
+    "test_type": "REGRESSION_RIVER_COASTAL"
+  },
+  {
+    "id": "REG-007",
+    "location_name": "Gangtok, Sikkim",
+    "latitude": 27.33,
+    "longitude": 88.61,
+    "hazard_focus": "Steep Himalayan terrain / Landslide / Seismic Zone V",
+    "expected_seismic_zone": "ZONE_V",
+    "expected_min_risk_level": "HIGH",
+    "expected_max_risk_level": "CRITICAL",
+    "test_type": "REGRESSION_HIMALAYAN_SEISMIC"
+  },
+  {
+    "id": "REG-008",
+    "location_name": "Bhuj, Gujarat",
+    "latitude": 23.24,
+    "longitude": 69.67,
+    "hazard_focus": "Kutch Seismic Zone V high earthquake risk",
+    "expected_seismic_zone": "ZONE_V",
+    "expected_min_risk_level": "HIGH",
+    "expected_max_risk_level": "CRITICAL",
+    "test_type": "REGRESSION_EARTHQUAKE"
+  },
+  {
+    "id": "REG-009",
+    "location_name": "Port Blair, Andaman & Nicobar",
+    "latitude": 11.62,
+    "longitude": 92.73,
+    "hazard_focus": "Island coastal surge / Tsunami / Seismic Zone V",
+    "expected_seismic_zone": "ZONE_V",
+    "expected_min_risk_level": "HIGH",
+    "expected_max_risk_level": "CRITICAL",
+    "test_type": "REGRESSION_ISLAND_COASTAL"
+  },
+  {
+    "id": "REG-010",
+    "location_name": "Radhanpur, Gujarat",
+    "latitude": 23.83,
+    "longitude": 71.60,
+    "hazard_focus": "Low-lying saline plain / Moderate seismic Zone IV",
+    "expected_seismic_zone": "ZONE_IV",
+    "expected_min_risk_level": "LOW",
+    "expected_max_risk_level": "MODERATE",
+    "test_type": "REGRESSION_PLAINS"
+  }
+]
