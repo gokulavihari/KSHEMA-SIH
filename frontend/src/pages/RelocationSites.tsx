@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchRelocationSites } from '../services/api';
 import { CandidateSite } from '../types';
 import { ShieldCheck, AlertOctagon, CheckCircle2, XCircle, Layers } from 'lucide-react';
+import { RelocationNavigationAction } from '../components/RelocationNavigationAction';
 
 export const RelocationSitesView: React.FC = () => {
   const [sites, setSites] = useState<CandidateSite[]>([]);
@@ -109,6 +110,17 @@ export const RelocationSitesView: React.FC = () => {
                       <div className="text-[11px] leading-relaxed">{site.rejection_reason || 'High Hazard Inundation / Landslide Runout Zone'}</div>
                     </div>
                   )}
+                  {/* Navigation Action */}
+                  <div className="pt-2 border-t border-slate-800">
+                    <RelocationNavigationAction
+                      latitude={site.latitude}
+                      longitude={site.longitude}
+                      siteName={site.name}
+                      locationLabel={`${site.subdistrict || site.district}, ${site.state || ''}`}
+                      isEligible={isSafe}
+                      variant="compact"
+                    />
+                  </div>
                 </div>
 
                 <div className="pt-3 border-t border-command-border text-[11px] text-slate-400 flex items-center justify-between">

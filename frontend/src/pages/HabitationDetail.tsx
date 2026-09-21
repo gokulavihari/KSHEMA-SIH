@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchHabitationDetail } from '../services/api';
 import { Habitation, RelocationPlan } from '../types';
 import { ArrowLeft, ShieldAlert, Navigation, Info, Users, Home, Activity } from 'lucide-react';
+import { RelocationNavigationAction } from '../components/RelocationNavigationAction';
 
 export const HabitationDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -140,6 +141,15 @@ export const HabitationDetailView: React.FC = () => {
                 <div>Safety Score: <b className="text-emerald-400">{alloc.safety_score}/100</b></div>
                 <div>Capacity Util: <b className="text-blue-400">{alloc.utilization_percentage}%</b></div>
                 <div>Bottleneck: <b className="text-amber-400">{alloc.bottleneck}</b></div>
+              </div>
+              <div className="pt-2 border-t border-emerald-900/60">
+                <RelocationNavigationAction
+                  latitude={(alloc as any).latitude}
+                  longitude={(alloc as any).longitude}
+                  siteName={alloc.site_name}
+                  isEligible={true}
+                  variant="compact"
+                />
               </div>
             </div>
           ))}

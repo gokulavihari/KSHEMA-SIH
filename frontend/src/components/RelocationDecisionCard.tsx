@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LocationAssessment, LocationRelocationResponse } from '../types';
 import { MapPin, ShieldAlert, ShieldCheck, AlertOctagon, Route, Hospital, CheckCircle2, XCircle, Info, ChevronDown, ChevronUp, FileText, UserCheck } from 'lucide-react';
+import { RelocationNavigationAction } from './RelocationNavigationAction';
 
 interface Props {
   assessment: LocationAssessment;
@@ -193,9 +194,17 @@ export const RelocationDecisionCard: React.FC<Props> = ({
                       </div>
                     </div>
                     <div className="text-base font-extrabold text-white mt-0.5">{siteName}</div>
-                    <div className="text-gray-400 text-[11px]">{siteDistrict}, {siteState} | Source: <span className="text-gray-300 font-mono">{sourceRef}</span></div>
-                    <div className="font-mono text-[10px] text-gray-400">
-                      Coords: {siteLat?.toFixed(6)}° N, {siteLon?.toFixed(6)}° E | Selection Score: <strong className="text-emerald-400">{selectionScore}/100</strong>
+                    <div className="text-gray-400 text-[11px] mb-2">{siteDistrict}, {siteState} | Source: <span className="text-gray-300 font-mono">{sourceRef}</span></div>
+                    
+                    {/* Navigation Action */}
+                    <div className="my-2 bg-gray-900/90 p-3 rounded-lg border border-gray-800">
+                      <RelocationNavigationAction
+                        latitude={siteLat}
+                        longitude={siteLon}
+                        siteName={siteName}
+                        locationLabel={`${siteDistrict}, ${siteState}`}
+                        isEligible={true}
+                      />
                     </div>
                   </div>
 
@@ -314,9 +323,17 @@ export const RelocationDecisionCard: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Fact 24, 25, 26: Provenance, Limitations, Human Review Required */}
+            {/* Fact 24, 25, 26: Technical GIS Coordinates, Provenance, Limitations, Human Review Required */}
             {showDetails && (
               <div className="p-3 bg-black/80 rounded border border-gray-800 text-[11px] space-y-2 text-gray-300">
+                {nearestSite && (
+                  <div className="p-2 bg-slate-900 border border-slate-800 rounded font-mono text-[10px] space-y-0.5">
+                    <strong className="text-cyan-300">Technical GIS Coordinates (Field Officers):</strong>
+                    <div className="text-slate-300">Latitude: {nearestSite.latitude?.toFixed(6)}° N</div>
+                    <div className="text-slate-300">Longitude: {nearestSite.longitude?.toFixed(6)}° E</div>
+                    <div className="text-slate-400">Site ID: {nearestSite.site_id || (nearestSite as any).id}</div>
+                  </div>
+                )}
                 <div>
                   <strong className="text-gray-200">Data Provenance Summary:</strong>
                   <ul className="list-disc pl-4 space-y-0.5 text-[10px] text-gray-400 mt-1">

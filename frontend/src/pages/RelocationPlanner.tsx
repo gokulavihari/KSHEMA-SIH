@@ -3,6 +3,7 @@ import { useLocation } from '../context/LocationContext';
 import { fetchHabitations, generateRelocationPlan, fetchLocationRelocationOptions } from '../services/api';
 import { Habitation, RelocationPlan } from '../types';
 import { Navigation, AlertTriangle, ShieldCheck, CheckCircle2, UserCheck, XCircle, Info, ArrowRight, Layers, HelpCircle, MapPin, RefreshCw } from 'lucide-react';
+import { RelocationNavigationAction } from '../components/RelocationNavigationAction';
 
 export const RelocationPlannerView: React.FC = () => {
   const { locationState, assessment } = useLocation();
@@ -317,10 +318,20 @@ export const RelocationPlannerView: React.FC = () => {
                   <h2 className="text-lg font-extrabold text-slate-100">{plan.recommended_site.name}</h2>
                 </div>
 
-                <div className="text-right">
-                  <div className="text-xs text-slate-400">Allocated Population</div>
-                  <div className="text-lg font-mono font-bold text-emerald-400">
-                    {plan.recommended_site.allocated_population} persons
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+                  <RelocationNavigationAction
+                    latitude={plan.recommended_site.latitude}
+                    longitude={plan.recommended_site.longitude}
+                    siteName={plan.recommended_site.name}
+                    locationLabel={plan.recommended_site.district ? `${plan.recommended_site.district}, ${plan.recommended_site.subdistrict || ''}` : undefined}
+                    isEligible={true}
+                    variant="compact"
+                  />
+                  <div className="text-right">
+                    <div className="text-xs text-slate-400">Allocated Population</div>
+                    <div className="text-lg font-mono font-bold text-emerald-400">
+                      {plan.recommended_site.allocated_population} persons
+                    </div>
                   </div>
                 </div>
               </div>
@@ -378,17 +389,29 @@ export const RelocationPlannerView: React.FC = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {(plan.alternative_sites || plan.alternatives).map((alt: any, idx: number) => (
-                  <div key={idx} className="p-3.5 bg-slate-900/80 border border-slate-800 rounded-lg text-xs space-y-2">
-                    <div className="flex justify-between items-center font-bold text-slate-200">
-                      <span className="text-blue-400">{alt.name}</span>
-                      <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">
-                        Cap: {alt.effective_capacity}
-                      </span>
+                  <div key={idx} className="p-3.5 bg-slate-900/80 border border-slate-800 rounded-lg text-xs space-y-2.5 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center font-bold text-slate-200">
+                        <span className="text-blue-400">{alt.name}</span>
+                        <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">
+                          Cap: {alt.effective_capacity}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 space-y-1">
+                        <div>Geodesic Straight-Line: <b>{alt.distance_km} km</b></div>
+                        <div>Safety Score: <b className="text-emerald-400">{alt.safety_score}/100</b></div>
+                        <div>Bottleneck: <b className="text-amber-400">{alt.bottleneck}</b></div>
+                      </div>
                     </div>
-                    <div className="text-[11px] text-slate-400 space-y-1">
-                      <div>Geodesic Straight-Line: <b>{alt.distance_km} km</b></div>
-                      <div>Safety Score: <b className="text-emerald-400">{alt.safety_score}/100</b></div>
-                      <div>Bottleneck: <b className="text-amber-400">{alt.bottleneck}</b></div>
+                    <div className="pt-2 border-t border-slate-800">
+                      <RelocationNavigationAction
+                        latitude={alt.latitude}
+                        longitude={alt.longitude}
+                        siteName={alt.name}
+                        locationLabel={alt.district ? `${alt.district}, ${alt.subdistrict || ''}` : undefined}
+                        isEligible={true}
+                        variant="compact"
+                      />
                     </div>
                   </div>
                 ))}
