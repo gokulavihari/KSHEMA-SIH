@@ -81,8 +81,28 @@ export interface DataProvenanceItem {
 export interface LocationAssessment {
   status?: string;
   assessment_mode?: 'FULL_EVIDENCE' | 'PARTIAL_EVIDENCE' | 'INSUFFICIENT_EVIDENCE';
+  formula_version?: string;
   coverage_percentage?: number;
   evidence_coverage?: number;
+  evidence_coverage_percent?: number;
+  data_quality_score?: number;
+  model_validation_score?: number | null;
+  risk_uncertainty?: string;
+  validation_status?: string;
+  hazard_components?: Record<string, number | null>;
+  exposure_components?: Record<string, any>;
+  vulnerability_components?: Record<string, any>;
+  weights?: Record<string, number>;
+  thresholds?: Record<string, string>;
+  provenance?: DataProvenanceItem[];
+  limitations?: string[];
+  place?: {
+    display_name: string;
+    locality: string;
+    district: string;
+    state: string;
+    country: string;
+  };
   assessment_radius_m?: number;
   assessment_geometry?: {
     type: string;
@@ -178,35 +198,71 @@ export interface LocationAssessment {
 export interface LocationRelocationOptionItem {
   site_id: string;
   site_name: string;
-  site_type: string;
-  district: string;
-  subdistrict: string;
+  name?: string;
+  site_type?: string;
+  type?: string;
+  district?: string;
+  subdistrict?: string;
+  state?: string;
   latitude: number;
   longitude: number;
-  allocated_population: number;
-  site_effective_capacity: number;
-  remaining_capacity_after_alloc: number;
-  utilization_percentage: number;
-  straight_line_dist_km: number;
-  road_dist_km: number;
-  estimated_travel_time_min: number;
-  safety_score: number;
-  suitability_score: number;
-  composite_score: number;
-  bottleneck: string;
-  nearest_hospital_km: number;
-  road_accessibility: string;
-  why_this_site: string[];
+  allocated_population?: number;
+  site_effective_capacity?: number;
+  effective_capacity?: number;
+  remaining_capacity_after_alloc?: number;
+  utilization_percentage?: number;
+  straight_line_dist_km?: number;
+  straight_line_km?: number;
+  road_dist_km?: number;
+  road_km?: number;
+  distance_km?: number;
+  distance?: any;
+  capacity?: any;
+  estimated_travel_time_min?: number;
+  direction?: string;
+  bearing_degrees?: number;
+  directional_instruction?: string;
+  safety_score?: number;
+  suitability_score?: number;
+  composite_score?: number;
+  selection_score?: number;
+  status?: string;
+  category?: string;
+  bottleneck?: string;
+  capacity_status?: string;
+  road_status?: string;
+  verification_status?: string;
+  nearest_hospital_km?: number;
+  road_accessibility?: string;
+  why_this_site?: string[];
+  explanation?: string[];
+  why_selected?: string[];
+  selection_reasons?: string[];
+  candidate_origin?: string;
+  data_source?: string;
+  source_reference?: string;
+  source_status?: string;
+  is_synthetic?: boolean;
+  is_fallback?: boolean;
+  retrieved_at?: string;
+  limitations?: string[];
+  authority_verification_required?: boolean;
 }
 
 export interface LocationRelocationResponse {
   plan_id: string;
-  status: 'FEASIBLE_COMPLETE' | 'FEASIBLE_PARTIAL' | 'NO_FEASIBLE_COMPLETE_RELOCATION' | 'NO_RELOCATION_INDICATED' | 'MONITOR_CONDITIONS';
+  status: string;
+  overall_status?: string;
   population_to_relocate?: number;
   allocated_population?: number;
   unallocated_population?: number;
-  nearest_feasible_site: LocationRelocationOptionItem | null;
+  selected_site?: LocationRelocationOptionItem | null;
+  recommended_site?: LocationRelocationOptionItem | null;
+  nearest_feasible_site?: LocationRelocationOptionItem | null;
   allocations: LocationRelocationOptionItem[];
+  candidates?: LocationRelocationOptionItem[];
+  alternative_sites?: LocationRelocationOptionItem[];
+  alternatives?: LocationRelocationOptionItem[];
   rejected_sites_audit: Array<{
     site_id: string;
     site_name: string;
@@ -214,7 +270,16 @@ export interface LocationRelocationResponse {
     safety_score: number;
     allocated: number;
   }>;
+  rejected_sites?: any[];
+  rejected_candidates?: any[];
+  search_parameters?: any;
+  why_selected?: string[];
+  why_rejected?: any[];
+  selection_reasons?: string[];
+  rejection_reasons_for_other_candidates?: any[];
   recommendations: string[];
+  limitations?: string[];
+  authority_disclaimer?: string;
   message?: string;
 }
 

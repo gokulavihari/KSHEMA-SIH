@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from '../context/LocationContext';
-import { resolveLocation } from '../services/api';
+import { resolveLocation, searchLocation } from '../services/api';
 import { Search, MapPin, Crosshair, X, Check, Loader2, Map as MapIcon, Compass } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const PRESET_LOCATIONS = [
-  { name: 'Raini Village (Reni), Chamoli', lat: 30.4852, lon: 79.6914, tag: 'High Landslide & Flash Flood', locality: 'Raini Village', district: 'Chamoli', state: 'Uttarakhand' },
-  { name: 'Joshimath Town Cluster, Chamoli', lat: 30.5528, lon: 79.3245, tag: 'Active Subsidence Zone', locality: 'Joshimath', district: 'Chamoli', state: 'Uttarakhand' },
-  { name: 'Helang Slope Cluster, Chamoli', lat: 30.5210, lon: 79.4820, tag: 'Debris Flow Vulnerable', locality: 'Helang', district: 'Chamoli', state: 'Uttarakhand' },
-  { name: 'Tapovan Staging Hub, Chamoli', lat: 30.4912, lon: 79.6310, tag: 'Relocation Staging Site', locality: 'Tapovan', district: 'Chamoli', state: 'Uttarakhand' },
-  { name: 'Pipalkoti Relocation Sector', lat: 30.4320, lon: 79.3310, tag: 'Safe Candidate Relocation Ground', locality: 'Pipalkoti', district: 'Chamoli', state: 'Uttarakhand' },
-  { name: 'Gopeshwar District Hub', lat: 30.4120, lon: 79.3210, tag: 'District Relief Campus', locality: 'Gopeshwar', district: 'Chamoli', state: 'Uttarakhand' },
-  { name: 'Medchal Town, Telangana', lat: 17.604161, lon: 78.483843, tag: 'Urban Flood Pilot Hub', locality: 'Medchal', district: 'Medchal-Malkajgiri', state: 'Telangana' },
-  { name: 'Hyderabad Capital Region', lat: 17.385044, lon: 78.486671, tag: 'Metropolitan Command Center', locality: 'Hyderabad', district: 'Hyderabad', state: 'Telangana' },
+  { name: 'Kullu, Himachal Pradesh', lat: 31.9579, lon: 77.1095, tag: 'Himalayan River Valley', locality: 'Kullu', district: 'Kullu', state: 'Himachal Pradesh' },
+  { name: 'Hyderabad, Telangana', lat: 17.3850, lon: 78.4867, tag: 'Metropolitan Region', locality: 'Hyderabad', district: 'Hyderabad', state: 'Telangana' },
+  { name: 'Kochi, Kerala', lat: 9.9312, lon: 76.2673, tag: 'Coastal Inundation Zone', locality: 'Kochi', district: 'Ernakulam', state: 'Kerala' },
+  { name: 'Mumbai, Maharashtra', lat: 19.0760, lon: 72.8777, tag: 'West Coast Coastal Urban', locality: 'Mumbai', district: 'Mumbai City', state: 'Maharashtra' },
+  { name: 'Chennai, Tamil Nadu', lat: 13.0827, lon: 80.2707, tag: 'East Coast Surge Prone', locality: 'Chennai', district: 'Chennai', state: 'Tamil Nadu' },
+  { name: 'Raini Village, Chamoli', lat: 30.4852, lon: 79.6914, tag: 'High Landslide & Flash Flood', locality: 'Raini Village', district: 'Chamoli', state: 'Uttarakhand' },
+  { name: 'Joshimath Town, Chamoli', lat: 30.5564, lon: 79.5642, tag: 'Active Subsidence Zone', locality: 'Joshimath', district: 'Chamoli', state: 'Uttarakhand' },
+  { name: 'Wayanad, Kerala', lat: 11.6854, lon: 76.1320, tag: 'Western Ghats Slope Hazard', locality: 'Wayanad', district: 'Wayanad', state: 'Kerala' },
 ];
 
 interface SearchResultItem {
@@ -92,7 +92,6 @@ const ModalEmbeddedMap: React.FC<{
       }
     }
 
-    // Trigger invalidateSize after render to ensure Leaflet calculates bounds correctly inside modal
     const timer = setTimeout(() => {
       if (mapRef.current) {
         mapRef.current.invalidateSize();
@@ -143,7 +142,6 @@ export const ChangeLocationModal: React.FC = () => {
   const [resolvingState, setResolvingState] = useState<'IDLE' | 'RESOLVING' | 'ASSESSING'>('IDLE');
   const [modalError, setModalError] = useState<string | null>(null);
 
-  // Sync selected point when modal opens or locationState changes
   useEffect(() => {
     if (isModalOpen) {
       setSelectedPoint({
@@ -161,7 +159,6 @@ export const ChangeLocationModal: React.FC = () => {
     }
   }, [isModalOpen, locationState]);
 
-  // Keyboard ESC listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isModalOpen) {
@@ -184,32 +181,26 @@ export const ChangeLocationModal: React.FC = () => {
     setSearchResults([]);
 
     try {
-      const res = await resolveLocation({ address: searchQuery });
-      const item: SearchResultItem = {
-        displayName: res.display_name || `${res.locality || searchQuery}, ${res.district || 'District'}`,
-        locality: res.locality || searchQuery,
-        district: res.district || 'District Region',
-        state: res.state || 'State Region',
-        country: res.country || 'India',
-        pincode: res.pincode,
-        latitude: res.latitude,
-        longitude: res.longitude,
-        source: 'SEARCH'
-      };
-      setSearchResults([item]);
-      setSelectedPoint({
-        lat: item.latitude,
-        lon: item.longitude,
-        displayName: item.displayName,
-        locality: item.locality,
-        district: item.district,
-        state: item.state,
-        country: item.country,
-        pincode: item.pincode,
-        source: 'SEARCH'
-      });
+      const results = await searchLocation(searchQuery.trim());
+      if (Array.isArray(results) && results.length > 0) {
+        const items: SearchResultItem[] = results.map((res: any) => ({
+          displayName: res.display_name || `${res.locality || res.name}, ${res.district || 'District'}, ${res.state || 'State'}, India`,
+          locality: res.locality || res.name || searchQuery,
+          district: res.district || 'District',
+          state: res.state || 'State',
+          country: res.country || 'India',
+          pincode: res.pincode,
+          latitude: res.latitude,
+          longitude: res.longitude,
+          source: 'SEARCH'
+        }));
+        setSearchResults(items);
+        handleSelectSearchResult(items[0]);
+      } else {
+        setModalError('Location not found. Please select a location from the search results.');
+      }
     } catch (err: any) {
-      setModalError(err.message || 'Could not find that location. Try another place name or enter coordinates.');
+      setModalError('Location not found. Please select a location from the search results.');
     } finally {
       setResolvingState('IDLE');
     }
@@ -467,7 +458,7 @@ export const ChangeLocationModal: React.FC = () => {
                   <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search Raini Village, Joshimath, Gopeshwar, Medchal, Hyderabad..."
+                    placeholder="Search for a location in India (e.g., Kullu, Hyderabad, Kochi, Wayanad, Mumbai...)"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-xs text-white focus:outline-none focus:border-command-accent"
@@ -484,7 +475,7 @@ export const ChangeLocationModal: React.FC = () => {
               </form>
 
               {searchResults.length > 0 && (
-                <div className="space-y-1.5 max-h-28 overflow-y-auto">
+                <div className="space-y-1.5 max-h-36 overflow-y-auto">
                   {searchResults.map((res, idx) => (
                     <div
                       key={idx}
@@ -495,11 +486,12 @@ export const ChangeLocationModal: React.FC = () => {
                           : 'bg-gray-900 border-gray-800 hover:border-gray-700 text-gray-300'
                       }`}
                     >
-                      <div>
-                        <div className="font-bold text-white">{res.displayName}</div>
-                        <div className="text-[10px] text-gray-400 font-mono">{res.latitude.toFixed(6)}°, {res.longitude.toFixed(6)}°</div>
+                      <div className="space-y-0.5">
+                        <div className="font-bold text-white text-xs">{res.locality || res.displayName.split(',')[0]}</div>
+                        <div className="text-[11px] text-blue-300">{res.district}, {res.state}, {res.country}</div>
+                        <div className="text-[10px] text-gray-400 font-mono">{res.latitude.toFixed(6)}° N, {res.longitude.toFixed(6)}° E</div>
                       </div>
-                      <span className="text-[10px] font-bold text-blue-400">SELECT</span>
+                      <span className="text-[10px] font-bold text-blue-400 border border-blue-800 px-2 py-1 rounded bg-blue-950/80">SELECT</span>
                     </div>
                   ))}
                 </div>

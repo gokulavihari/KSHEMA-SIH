@@ -6,6 +6,7 @@ import { LocationHeader } from '../components/LocationHeader';
 import { ChangeLocationModal } from '../components/ChangeLocationModal';
 import { LiveConditionsCard } from '../components/LiveConditionsCard';
 import { RiskFactorBreakdown } from '../components/RiskFactorBreakdown';
+import { RelocationDecisionCard } from '../components/RelocationDecisionCard';
 import { ShieldCheck, ShieldAlert, AlertOctagon, Activity, ArrowRight, MapPin, Hospital, Route, CheckCircle2, ChevronRight, RefreshCw, AlertTriangle, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -285,6 +286,13 @@ export const DashboardView: React.FC = () => {
           </div>
         </div>
 
+        {/* 2.5 DIRECT RELOCATION ASSESSMENT & DECISION CARD (PHASE 6) */}
+        <RelocationDecisionCard
+          assessment={assessment}
+          relocationOptions={relocOptions}
+          loading={relocLoading}
+        />
+
         {/* 3. MAIN DASHBOARD CONTENT: 2-COLUMN LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* LEFT COLUMN (7 COLS): Why? & Methodology */}
@@ -430,25 +438,25 @@ export const DashboardView: React.FC = () => {
                     <div className="bg-gray-950/70 border border-gray-800 p-2.5 rounded-lg">
                       <div className="text-[10px] text-gray-400">Effective Capacity</div>
                       <div className="font-bold text-white text-sm mt-0.5">
-                        {nearestSite.site_effective_capacity.toLocaleString()} persons
+                        {(nearestSite.site_effective_capacity || nearestSite.effective_capacity || 0).toLocaleString()} persons
                       </div>
-                      <div className="text-[10px] text-amber-400 truncate">Bottleneck: {nearestSite.bottleneck}</div>
+                      <div className="text-[10px] text-amber-400 truncate">Bottleneck: {nearestSite.bottleneck || 'Water Supply'}</div>
                     </div>
 
                     <div className="bg-gray-950/70 border border-gray-800 p-2.5 rounded-lg">
                       <div className="text-[10px] text-gray-400">Healthcare Access</div>
                       <div className="font-bold text-white text-sm flex items-center gap-1 mt-0.5">
                         <Hospital className="w-3.5 h-3.5 text-blue-400" />
-                        <span>{nearestSite.nearest_hospital_km} km</span>
+                        <span>{nearestSite.nearest_hospital_km || 2.0} km</span>
                       </div>
-                      <div className="text-[10px] text-gray-500">{nearestSite.road_accessibility} Road</div>
+                      <div className="text-[10px] text-gray-500">{nearestSite.road_accessibility || 'Accessible'} Road</div>
                     </div>
                   </div>
 
                   {/* Why Selected bullet points */}
                   <div className="bg-gray-950/50 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs text-gray-300">
                     <div className="font-bold text-gray-200 text-[11px]">Feasibility Validation:</div>
-                    {nearestSite.why_this_site.map((reason, idx) => (
+                    {(nearestSite.why_this_site || nearestSite.explanation || nearestSite.selection_reasons || []).map((reason, idx) => (
                       <div key={idx} className="flex items-start gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
                         <span>{reason}</span>

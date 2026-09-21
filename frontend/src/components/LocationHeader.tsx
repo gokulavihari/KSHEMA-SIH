@@ -26,16 +26,32 @@ export const LocationHeader: React.FC = () => {
   };
 
   const getLocationSourceLabel = () => {
+    const src = (locationState.source || '').toUpperCase();
+    if (src.includes('GPS')) {
+      if (locationState.permissionState === 'UNAVAILABLE') return 'GPS UNAVAILABLE';
+      if (locationState.permissionState === 'DENIED') return 'GPS DENIED';
+      return 'GPS LOCATION';
+    }
+    if (src.includes('MAP')) return 'MAP LOCATION';
+    if (src.includes('SEARCH')) return 'SEARCH LOCATION';
+    if (src.includes('PRESET')) return 'PRESET HABITATION';
+    if (src.includes('COORD')) return 'COORDINATE LOCATION';
     if (locationState.permissionState === 'UNAVAILABLE') return 'LOCATION UNAVAILABLE';
-    if (locationState.source === 'GPS') return 'GPS LOCATION';
-    if (locationState.source === 'MAP' || locationState.source === 'MAP_PIN') return 'MAP LOCATION';
     return 'MANUAL LOCATION';
   };
 
   const getLocationSourceBadgeClass = () => {
-    if (locationState.permissionState === 'UNAVAILABLE') return 'bg-rose-950/90 text-rose-300 border-rose-700';
-    if (locationState.source === 'GPS') return 'bg-emerald-950/90 text-emerald-300 border-emerald-700';
-    if (locationState.source === 'MAP' || locationState.source === 'MAP_PIN') return 'bg-blue-950/90 text-blue-300 border-blue-700';
+    const src = (locationState.source || '').toUpperCase();
+    if (src.includes('GPS')) {
+      if (locationState.permissionState === 'UNAVAILABLE' || locationState.permissionState === 'DENIED') {
+        return 'bg-rose-950/90 text-rose-300 border-rose-700';
+      }
+      return 'bg-emerald-950/90 text-emerald-300 border-emerald-700';
+    }
+    if (src.includes('MAP')) return 'bg-blue-950/90 text-blue-300 border-blue-700';
+    if (src.includes('SEARCH')) return 'bg-cyan-950/90 text-cyan-300 border-cyan-700';
+    if (src.includes('PRESET')) return 'bg-purple-950/90 text-purple-300 border-purple-700';
+    if (src.includes('COORD')) return 'bg-indigo-950/90 text-indigo-300 border-indigo-700';
     return 'bg-amber-950/90 text-amber-300 border-amber-700';
   };
 

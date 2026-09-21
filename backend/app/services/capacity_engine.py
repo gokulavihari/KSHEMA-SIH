@@ -14,13 +14,13 @@ def calculate_site_capacity(site_data: dict, current_allocated: int = 0) -> dict
     Effective Capacity = MIN(all 7 capacity components)
     Bottleneck = argmin(components)
     """
-    land_cap = int(site_data["land_area_sqm"] / 10.0)
-    water_cap = int(site_data["water_lpd"] / 100.0)
-    sanitation_cap = site_data["sanitation_cap"]
-    healthcare_cap = site_data["healthcare_cap"]
-    education_cap = site_data["education_cap"]
-    road_cap = site_data["road_cap"]
-    emergency_cap = site_data["emergency_cap"]
+    land_cap = int(site_data.get("land_area_sqm", 5000) / 10.0)
+    water_cap = int(site_data.get("water_lpd", 20000) / 100.0)
+    sanitation_cap = site_data.get("sanitation_cap", land_cap)
+    healthcare_cap = site_data.get("healthcare_cap", land_cap)
+    education_cap = site_data.get("education_cap", land_cap)
+    road_cap = site_data.get("road_cap", land_cap)
+    emergency_cap = site_data.get("emergency_cap", land_cap)
     
     components = {
         "Land Area": land_cap,

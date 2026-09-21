@@ -214,16 +214,63 @@ def calculate_location_risk_assessment(
         }
     }
 
-    # 3. Calculate Evidence Coverage Percentage
+    # 3. Calculate Evidence Coverage & Data Quality Metrics (Reworked per Phase 4)
     total_configured_weight = sum(weights.values())
     available_weight = sum(weights[k] for k, info in factor_definitions.items() if info["available"] and k in weights)
     coverage_percentage = round((available_weight / total_configured_weight * 100.0), 1) if total_configured_weight > 0 else 0.0
+    evidence_coverage_percent = coverage_percentage
+
+    # Data Quality Metric (0-100) based on GPS precision, live weather link, and DEM spatial resolution
+    gps_q = 100.0 if loc["accuracy_quality"] == "HIGH" else (75.0 if loc["accuracy_quality"] == "MEDIUM" else 40.0)
+    weather_q = 95.0 if lc["imd_status"] == "LIVE" else 70.0
+    spatial_dem_q = 90.0
+    data_quality_score = round(0.40 * weather_q + 0.35 * spatial_dem_q + 0.25 * gps_q, 1)
+
+    # Risk Uncertainty Band
+    if coverage_percentage >= 80.0 and data_quality_score >= 80.0:
+        risk_uncertainty = "LOW"
+    elif coverage_percentage >= 50.0:
+        risk_uncertainty = "MEDIUM"
+    else:
+        risk_uncertainty = "HIGH"
 
     # 4. Apply Minimum Evidence Rule
     is_evidence_sufficient = (available_weight / total_configured_weight) >= MINIMUM_RISK_COVERAGE_THRESHOLD
 
+    # Component Separations (HAZARD, EXPOSURE, VULNERABILITY)
+    hazard_components = {
+        "flood_hazard": flood_hazard_score,
+        "landslide_susceptibility": landslide_score,
+        "seismic_hazard": seismic_score,
+        "coastal_hazard": coastal_score if is_coastal else None,
+        "extreme_rainfall": rainfall_score,
+        "slope_severity": slope_score,
+        "river_proximity": river_prox_score
+    }
+
+    exposure_components = {
+        "population_exposure": pop_exposure_score,
+        "infrastructure_vulnerability": infra_vuln_score,
+        "estimated_population": (450 if sf.get("historical_events_10km", 0) > 0 else 150) if is_in_pilot else 120
+    }
+
+    vulnerability_components_dict = {
+        "accessibility_penalty": access_penalty,
+        "infrastructure_structural_vulnerability": infra_vuln_score,
+        "slope_gradient_exposure": slope_score
+    }
+
+    thresholds_dict = {
+        "LOW": "0.0 - 20.0",
+        "MODERATE": "20.1 - 40.0",
+        "HIGH": "40.1 - 60.0",
+        "VERY HIGH": "60.1 - 80.0",
+        "CRITICAL": "80.1 - 100.0"
+    }
+
     if is_evidence_sufficient:
         assessment_mode = "FULL_EVIDENCE" if coverage_percentage >= 90.0 else "PARTIAL_EVIDENCE"
+        validation_status = "RESEARCH_VERIFIED" if is_in_pilot else "ASSESSED_PARTIAL"
 
         # Calculate Renormalized Risk Score
         renormalized_risk_sum = sum(
@@ -251,13 +298,11 @@ def calculate_location_risk_assessment(
         exposure_score = round((pop_exposure_score * 0.5 + infra_vuln_score * 0.5), 1)
 
         # Assessment Confidence Calculation
-        gps_q = 100.0 if loc["accuracy_quality"] == "HIGH" else (75.0 if loc["accuracy_quality"] == "MEDIUM" else 40.0)
-        freshness_q = 95.0 if lc["imd_status"] == "LIVE" else 70.0
-        res_q = 88.0
-        conf_raw = 0.40 * coverage_percentage + 0.25 * freshness_q + 0.20 * res_q + 0.15 * gps_q
+        conf_raw = 0.50 * coverage_percentage + 0.30 * data_quality_score + 0.20 * gps_q
         confidence = round(max(0.0, min(100.0, conf_raw)), 1)
     else:
         assessment_mode = "INSUFFICIENT_EVIDENCE"
+        validation_status = "INSUFFICIENT_DATA"
         risk_score = None
         risk_level = "UNKNOWN"
         vulnerability_score = None
@@ -614,10 +659,17 @@ def calculate_location_risk_assessment(
     data_status_parts.append("MODEL-DERIVED")
     composite_data_status = " + ".join(data_status_parts)
 
+    limitations_list = [
+        "Risk calculations are deterministic heuristics combining available spatial overlays and live weather telemetry.",
+        "Model validation score is omitted (null) until an independent empirical disaster occurrence test dataset is validated.",
+        "Inland coordinates out of coastal overlay coverage do not compute coastal surge indices.",
+        "Relocation site assignments require district authority field verification prior to emergency deployment."
+    ]
+
     # Developer Debug Information
     debug_info = {
-        "model_name": "AASHRAY Location Risk Assessment Engine v2.0",
-        "model_version": "AASHRAY-RISK-v2.0",
+        "model_name": "AASHRAY Location Risk Assessment Engine v2.1",
+        "model_version": "AASHRAY-RISK-v2.1",
         "model_disclaimer": "Prototype heuristic risk index for decision support — Not an official government hazard classification",
         "coordinates": {"latitude": latitude, "longitude": longitude},
         "raw_spatial_features": sf,
@@ -627,22 +679,31 @@ def calculate_location_risk_assessment(
         "coverage_percentage": coverage_percentage,
         "renormalized_risk_score": risk_score,
         "risk_classification": risk_level,
-        "classification_thresholds": {
-            "LOW": "0.0 - 20.0",
-            "MODERATE": "20.1 - 40.0",
-            "HIGH": "40.1 - 60.0",
-            "VERY HIGH": "60.1 - 80.0",
-            "CRITICAL": "80.1 - 100.0"
-        },
+        "classification_thresholds": thresholds_dict,
         "confidence_score": confidence,
+        "data_quality_score": data_quality_score,
+        "risk_uncertainty": risk_uncertainty,
+        "validation_status": validation_status,
         "missing_layer_warnings": [f"{k}: OUT_OF_COVERAGE" for k, info in factor_definitions.items() if not info["available"]]
     }
 
     return {
         "status": "ASSESSED" if is_in_pilot else ("PARTIAL" if is_evidence_sufficient else "INSUFFICIENT"),
         "assessment_mode": assessment_mode,
+        "formula_version": "AASHRAY-RISK-v2.1",
         "coverage_percentage": coverage_percentage,
         "evidence_coverage": coverage_percentage,
+        "evidence_coverage_percent": evidence_coverage_percent,
+        "data_quality_score": data_quality_score,
+        "model_validation_score": None, # None because no independent empirical model validation claims made
+        "risk_uncertainty": risk_uncertainty,
+        "assessment_confidence": confidence,
+        "validation_status": validation_status,
+        "weights": weights,
+        "thresholds": thresholds_dict,
+        "hazard_components": hazard_components,
+        "exposure_components": exposure_components,
+        "vulnerability_components": vulnerability_components_dict,
         "assessment_radius_m": assessment_radius_m,
         "assessment_geometry": assessment_geometry,
         "hazard_overlaps": hazard_overlaps,
@@ -656,6 +717,8 @@ def calculate_location_risk_assessment(
         "decision": decision_info,
         "relocation": relocation_data,
         "data_provenance": data_provenance,
+        "provenance": data_provenance,
+        "limitations": limitations_list,
         "status_banner": status_banner,
         "hazard_score": hazard_score,
         "exposure_score": exposure_score,

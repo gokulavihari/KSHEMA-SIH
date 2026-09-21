@@ -1,27 +1,19 @@
-import urllib.request
-import json
 import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'backend')))
 
-BASE_URL = "http://127.0.0.1:8010/api"
+from fastapi.testclient import TestClient
+from app.main import app
 
-def http_get(url):
-    req = urllib.request.Request(url)
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode('utf-8'))
+client = TestClient(app)
 
-def http_post(url, data):
-    body = json.dumps(data).encode('utf-8')
-    req = urllib.request.Request(url, data=body, headers={'Content-Type': 'application/json'})
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode('utf-8'))
-
-def run_verification():
+def run_direct_verification():
     print("=" * 70)
-    print("AASHRAY LOCATION-AGNOSTIC & CONTROLLED ML REPAIR VERIFICATION")
+    print("AASHRAY LOCATION-AGNOSTIC & CONTROLLED ML DIRECT REPAIR VERIFICATION")
     print("=" * 70)
 
     # 1. Health check
-    h_res = http_get(f"{BASE_URL}/health")
+    h_res = client.get("/api/health").json()
     print("[1] HEALTH CHECK:")
     print(f"    System: {h_res.get('system')}")
     print(f"    Mode: {h_res.get('location_mode')}")
@@ -29,7 +21,7 @@ def run_verification():
     assert h_res.get("location_mode") == "GLOBAL_LOCATION_AGNOSTIC"
 
     # 2. System Config check
-    cfg_res = http_get(f"{BASE_URL}/config")
+    cfg_res = client.get("/api/config").json()
     print("\n[2] SYSTEM CONFIGURATION:")
     print(f"    Default Region: {cfg_res.get('default_region')}")
     print(f"    Data Coverage Mode: {cfg_res.get('data_coverage_mode')}")
@@ -37,14 +29,14 @@ def run_verification():
     assert cfg_res.get("default_region") is None
 
     # 3. Coverage Report
-    cov_res = http_get(f"{BASE_URL}/coverage")
+    cov_res = client.get("/api/coverage").json()
     print("\n[3] DATA COVERAGE REPORT:")
     print(f"    Supported States: {cov_res.get('supported_states')}")
     print(f"    Supported Districts: {cov_res.get('supported_districts')}")
     print(f"    Geographic Bounds: {cov_res.get('supported_geographic_bounds')}")
 
     # 4. Database Readiness Diagnostics
-    db_res = http_get(f"{BASE_URL}/debug/database-readiness")
+    db_res = client.get("/api/debug/database-readiness").json()
     print("\n[4] DATABASE READINESS DIAGNOSTICS:")
     print(f"    Total Habitations: {db_res.get('total_habitations')}")
     print(f"    Total Relocation Sites: {db_res.get('total_relocation_sites')}")
@@ -53,13 +45,13 @@ def run_verification():
     print(f"    Provenance Coverage: {db_res.get('percentage_provenance')}%")
 
     # 5. In-Coverage Location Risk & Relocation Analysis (Raini Village)
-    reloc_in = http_post(f"{BASE_URL}/location/relocation-options", {
+    reloc_in = client.post("/api/location/relocation-options", json={
         "latitude": 30.4852,
         "longitude": 79.6914,
         "population_to_relocate": 1250,
         "habitation_id": "HAB-001",
         "habitation_name": "Raini Village"
-    })
+    }).json()
     print("\n[5] IN-COVERAGE RELOCATION (Raini Village):")
     print(f"    Status: {reloc_in.get('status')} | Decision Status: {reloc_in.get('decision_status')}")
     print(f"    Recommended Site: {reloc_in.get('recommended_site', {}).get('name') if reloc_in.get('recommended_site') else 'None'}")
@@ -68,11 +60,11 @@ def run_verification():
     assert "structured_explanation" in reloc_in
 
     # 6. Out-of-Coverage Location Check (Hyderabad / Telangana)
-    reloc_out = http_post(f"{BASE_URL}/location/relocation-options", {
+    reloc_out = client.post("/api/location/relocation-options", json={
         "latitude": 17.3850,
         "longitude": 78.4867,
         "population_to_relocate": 500
-    })
+    }).json()
     print("\n[6] OUT-OF-COVERAGE RELOCATION (Hyderabad):")
     print(f"    Status: {reloc_out.get('status')}")
     print(f"    Message: {reloc_out.get('message')}")
@@ -82,25 +74,25 @@ def run_verification():
     assert reloc_out.get("recommended_site") is None
 
     # 7. ML Retraining & Model Cards
-    models_res = http_get(f"{BASE_URL}/ml/models")
+    models_res = client.get("/api/ml/models").json()
     print("\n[7] ML MODEL CARDS:")
     print(f"    Active Production Model: {models_res[0].get('model_name')} (v{models_res[0].get('model_version')})")
     print(f"    F1 Score: {models_res[0].get('evaluation_metrics', {}).get('f1_score')}")
 
     # Retraining rejection on unvalidated data
-    retrain_reject = http_post(f"{BASE_URL}/ml/training-runs", {
+    retrain_reject = client.post("/api/ml/training-runs", json={
         "dataset_version": "DRAFT",
         "labeled_samples_count": 5,
         "has_verified_ground_truth": False
-    })
+    }).json()
     print("\n[8] ML RETRAINING UNVALIDATED REJECTION:")
     print(f"    Status: {retrain_reject.get('status')}")
     print(f"    Message: {retrain_reject.get('message')}")
     assert retrain_reject.get("status") == "INSUFFICIENT_DATA"
 
     print("\n" + "=" * 70)
-    print("ALL VERIFICATION CHECKS PASSED PERFECTLY!")
+    print("ALL DIRECT VERIFICATION CHECKS PASSED PERFECTLY!")
     print("=" * 70)
 
 if __name__ == "__main__":
-    run_verification()
+    run_direct_verification()

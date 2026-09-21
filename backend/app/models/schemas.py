@@ -213,3 +213,111 @@ class FieldReportSchema(BaseModel):
     description: str
     timestamp: str
     officer_id: str
+
+class SystemConfigSchema(BaseModel):
+    default_region: Optional[str] = None
+    supported_regions: List[str] = []
+    data_coverage_mode: str = "verified_only"
+    allow_demo_data: bool = False
+    require_source_metadata: bool = True
+    require_coordinates: bool = True
+    require_capacity_for_relocation: bool = True
+    minimum_data_quality_score: float = 0.70
+
+class CoverageReportSchema(BaseModel):
+    supported_states: List[str]
+    supported_districts: List[str]
+    supported_geographic_bounds: Dict[str, float]
+    number_of_records_per_area: Dict[str, int]
+    last_updated_timestamp: str
+    data_source: str
+    verification_status: str
+    limitations: List[str]
+
+class DatabaseReadinessSchema(BaseModel):
+    total_habitations: int
+    total_relocation_sites: int
+    total_active_relocation_sites: int
+    sites_with_valid_coordinates: int
+    sites_with_missing_coordinates: int
+    sites_marked_safe: int
+    sites_marked_unsafe: int
+    verified_sites: int
+    demonstration_sites: int
+    sites_with_real_capacity: int
+    sites_with_unknown_capacity: int
+    sites_with_source_metadata: int
+    sites_without_source_metadata: int
+    district_wise_habitation_count: Dict[str, int]
+    district_wise_relocation_site_count: Dict[str, int]
+    state_wise_habitation_count: Dict[str, int]
+    state_wise_relocation_site_count: Dict[str, int]
+    geographic_bounding_box: Dict[str, float]
+    supported_states: List[str]
+    supported_districts: List[str]
+    data_freshness: str
+    source_coverage: str
+    percentage_valid_coordinates: float
+    percentage_provenance: float
+    percentage_capacity: float
+    percentage_safety_status: float
+
+class UncertaintyModelSchema(BaseModel):
+    level: str # low, medium, high
+    reasons: List[str]
+
+class WhyRejectedItemSchema(BaseModel):
+    site_id: str
+    site_name: str
+    reasons: List[str]
+
+class StructuredExplanationSchema(BaseModel):
+    decision_status: str # recommended | alternatives_available | no_eligible_site | insufficient_data
+    recommended_site: Optional[Dict[str, Any]] = None
+    alternative_sites: List[Dict[str, Any]] = []
+    why_selected: List[str] = []
+    why_rejected: List[WhyRejectedItemSchema] = []
+    calculation_details: Dict[str, Any] = {}
+    uncertainty: UncertaintyModelSchema
+    human_review_required: bool = True
+
+class ModelVersionSchema(BaseModel):
+    model_id: str
+    model_type: str
+    input_features: List[str]
+    training_data_summary: str
+    validation_data_summary: str
+    geographic_coverage: str
+    known_limitations: List[str]
+    model_version: str
+    training_timestamp: str
+    evaluation_metrics: Dict[str, Any]
+    intended_use: str
+    prohibited_use: str
+    human_review_required: bool = True
+    status: str = "PRODUCTION" # PRODUCTION, CANDIDATE, ARCHIVED
+
+class RetrainingRunSchema(BaseModel):
+    training_run_id: str
+    dataset_version: str
+    candidate_model_id: str
+    status: str # IN_PROGRESS, COMPLETED, REJECTED, APPROVED_DEPLOYED, INSUFFICIENT_DATA
+    message: str
+    metrics: Dict[str, Any] = {}
+    created_at: str
+
+class ModelEvaluationSchema(BaseModel):
+    evaluation_id: str
+    candidate_model_id: str
+    production_model_id: str
+    precision: float
+    recall: float
+    f1_score: float
+    confusion_matrix: Dict[str, Any]
+    false_positive_rate: float
+    false_negative_rate: float
+    geographic_holdout_pass: bool
+    data_quality_sensitivity_pass: bool
+    recommended_action: str # PROMOTE, REJECT, REQUIRES_MORE_DATA
+    evaluated_at: str
+

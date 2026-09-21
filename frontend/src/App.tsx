@@ -20,6 +20,45 @@ import { DataSourcesView } from './pages/DataSourcesView';
 import { FieldModeView } from './pages/FieldModeView';
 import { AuditLogsView } from './pages/AuditLogsView';
 import { SettingsView } from './pages/SettingsView';
+import { useLocation } from './context/LocationContext';
+import { EmergencyAlertBanner } from './components/EmergencyAlertBanner';
+import { SafetyPlanModal } from './components/SafetyPlanModal';
+import { EmergencySimulatorModal } from './components/EmergencySimulatorModal';
+
+const AppModalsContainer: React.FC = () => {
+  const {
+    showEmergencyBanner,
+    showSafetyPlanModal,
+    showSimulatorModal,
+    activeEmergencyAlert,
+    enableEmergencyAlerts,
+    disableEmergencyAlerts,
+    closeSafetyPlanModal,
+    closeSimulatorModal
+  } = useLocation();
+
+  return (
+    <>
+      {showEmergencyBanner && (
+        <EmergencyAlertBanner
+          onAllow={enableEmergencyAlerts}
+          onDeny={disableEmergencyAlerts}
+        />
+      )}
+      {showSafetyPlanModal && (
+        <SafetyPlanModal
+          alertData={activeEmergencyAlert}
+          onClose={closeSafetyPlanModal}
+        />
+      )}
+      {showSimulatorModal && (
+        <EmergencySimulatorModal
+          onClose={closeSimulatorModal}
+        />
+      )}
+    </>
+  );
+};
 
 export function App() {
   return (
@@ -53,6 +92,7 @@ export function App() {
             </main>
           </div>
         </div>
+        <AppModalsContainer />
       </BrowserRouter>
     </LocationProvider>
   );

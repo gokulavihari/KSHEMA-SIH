@@ -53,7 +53,7 @@ def test_edge_7_empty_candidate_site_list():
         population_to_relocate=100,
         candidate_sites=[]
     )
-    assert result["overall_status"] in ["NO_VERIFIED_SITE_FOUND", "OUT_OF_COVERAGE", "NO_SAFE_SITE_FOUND"]
+    assert result["overall_status"] in ["NO_VERIFIED_SITE_FOUND", "OUT_OF_COVERAGE", "NO_SAFE_SITE_FOUND", "insufficient_data"]
     assert result["recommended_site"] is None
 
 def test_edge_8_no_safe_site_available():

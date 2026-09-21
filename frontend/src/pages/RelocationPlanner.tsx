@@ -212,6 +212,25 @@ export const RelocationPlannerView: React.FC = () => {
         </div>
       ) : plan ? (
         <div className="space-y-6">
+          {plan.status === 'insufficient_data' || plan.overall_status === 'insufficient_data' ? (
+            <div className="p-6 bg-slate-900 border-2 border-amber-600/80 rounded-xl text-xs space-y-3">
+              <div className="flex items-center space-x-2 text-amber-300 font-bold text-sm">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+                <span>INSUFFICIENT DATA COVERAGE</span>
+              </div>
+              <div className="text-slate-300">{plan.message || 'Reliable data is not available for this location.'}</div>
+              {plan.missing_data && plan.missing_data.length > 0 && (
+                <div className="bg-slate-950 p-3 rounded border border-slate-800 space-y-1">
+                  <div className="text-slate-400 font-bold">Missing Required Data:</div>
+                  {plan.missing_data.map((m: string, i: number) => (
+                    <div key={i} className="text-amber-200 text-[11px]">• {m}</div>
+                  ))}
+                </div>
+              )}
+              <div className="text-slate-400">Next Action: <strong className="text-cyan-300">{plan.next_action || 'Collect or connect verified data.'}</strong></div>
+            </div>
+          ) : (
+            <>
           {/* Status Alert Banner */}
           <div
             className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs font-semibold ${
@@ -395,6 +414,8 @@ export const RelocationPlannerView: React.FC = () => {
               ))}
             </div>
           </div>
+          </>
+          )}
         </div>
       ) : null}
     </div>

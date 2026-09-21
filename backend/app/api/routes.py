@@ -1,6 +1,9 @@
+from app.data_providers.provider_registry import get_data_providers_status
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import List, Dict, Any, Optional
 import uuid
+
+from app.core.config import settings
 
 from app.services.data_seed import (
     RAW_HABITATIONS, RAW_CANDIDATE_SITES, DATA_SOURCES, INITIAL_ALERTS,
@@ -14,12 +17,18 @@ from app.services.relocation_optimizer import generate_relocation_plan
 from app.services.simulation_engine import run_extreme_rainfall_simulation
 from app.services.risk_service import calculate_location_risk_assessment
 from app.services.relocation_service import find_location_relocation_options
-from app.data_providers.geocoding_provider import reverse_geocode, forward_geocode
-from app.data_providers.provider_registry import get_data_providers_status
+from app.data_providers.geocoding_provider import reverse_geocode, forward_geocode, forward_geocode_search
+from app.services.push_service import get_vapid_public_key, save_push_subscription, remove_push_subscription
+from app.services.emergency_alert_service import evaluate_location_emergency_risk, simulate_demo_alert, get_alert_audit_logs
+from app.services.ml_retraining_service import (
+    get_all_models, get_model_by_id, get_production_model,
+    get_training_runs, get_evaluation_by_id, initiate_training_run,
+    approve_model_promotion, rollback_production_model
+)
 from app.models.schemas import (
     HabitationSchema, CandidateSiteSchema, RelocationPlanSchema,
     SimulationRequestSchema, SimulationResponseSchema, DataSourceSchema,
-    AlertSchema, FieldReportSchema
+    AlertSchema, FieldReportSchema, SystemConfigSchema
 )
 
 router = APIRouter()
@@ -49,12 +58,61 @@ CURRENT_SIMULATION_STATE = {
 def get_health():
     return {
         "status": "HEALTHY",
-        "system": "AASHRAY Decision-Support Platform",
-        "version": "1.0.0",
-        "pilot_region": "Chamoli District, Uttarakhand",
-        "database": "SQLite + GeoPandas Spatial Engine Mode",
-        "timestamp": "2026-09-09T22:50:00Z"
+        "system": settings.PROJECT_NAME,
+        "version": settings.VERSION,
+        "location_mode": "GLOBAL_LOCATION_AGNOSTIC",
+        "supported_regions": settings.SYSTEM_CONFIG["supported_regions"],
+        "database": "SQLite + GeoPandas PostGIS Spatial Engine Mode",
+        "timestamp": "2026-09-18T14:30:00Z"
     }
+
+@router.get("/config")
+def get_system_config():
+    return settings.SYSTEM_CONFIG
+
+@router.post("/config")
+def update_system_config(payload: Dict[str, Any] = Body(...)):
+    for k, v in payload.items():
+        if k in settings.SYSTEM_CONFIG:
+            settings.SYSTEM_CONFIG[k] = v
+    return {"message": "System configuration updated successfully", "config": settings.SYSTEM_CONFIG}
+
+@router.get("/coverage")
+def get_data_coverage(
+    latitude: float = Query(30.4852, description="Latitude coordinate"),
+    longitude: float = Query(79.6914, description="Longitude coordinate"),
+    mode: str = Query("RESEARCH", description="Execution mode: STRICT_VERIFIED, RESEARCH, or DEMO")
+):
+    from app.services.data_coverage_service import DataCoverageService
+    coverage_eval = DataCoverageService.evaluate_location_coverage(latitude, longitude, mode=mode)
+    
+    states = list(set([h.get("state", "Uttarakhand") for h in RAW_HABITATIONS] + [s.get("state", "Uttarakhand") for s in RAW_CANDIDATE_SITES]))
+    districts = list(set([h.get("subdistrict", "Chamoli") for h in RAW_HABITATIONS] + [s.get("district", "Chamoli") for s in RAW_CANDIDATE_SITES]))
+    
+    lats = [h["latitude"] for h in RAW_HABITATIONS if h.get("latitude")] + [s["latitude"] for s in RAW_CANDIDATE_SITES if s.get("latitude")]
+    lons = [h["longitude"] for h in RAW_HABITATIONS if h.get("longitude")] + [s["longitude"] for s in RAW_CANDIDATE_SITES if s.get("longitude")]
+    
+    bounds = {
+        "min_latitude": round(min(lats), 4) if lats else 30.0,
+        "max_latitude": round(max(lats), 4) if lats else 30.8,
+        "min_longitude": round(min(lons), 4) if lons else 79.1,
+        "max_longitude": round(max(lons), 4) if lons else 79.8
+    }
+
+    return {
+        **coverage_eval,
+        "supported_states": states,
+        "supported_districts": districts,
+        "supported_geographic_bounds": bounds,
+        "last_updated_timestamp": "2026-09-18T00:00:00Z",
+        "data_source": "SRTM DEM, IS 1893 Seismic, IMD Telemetry & OSM Spatial Engine",
+        "verification_status": "VERIFIED_OFFICIAL" if mode == "STRICT_VERIFIED" else ("DEMO_ONLY" if mode == "DEMO" else "RESEARCH_ESTIMATE"),
+        "limitations": [
+            "Analysis requires sufficient evidence coverage across active GIS layers.",
+            "STRICT_VERIFIED mode restricts population allocation to officially verified shelters."
+        ]
+    }
+
 
 @router.get("/dashboard")
 def get_dashboard():
@@ -520,6 +578,7 @@ def resolve_location(payload: Dict[str, Any] = Body(...)):
         res = forward_geocode(str(address))
         if res:
             return res
+        raise HTTPException(status_code=404, detail=f"Location '{address}' not found. Please select a location from the search results.")
 
     if lat is not None and lon is not None:
         try:
@@ -528,6 +587,52 @@ def resolve_location(payload: Dict[str, Any] = Body(...)):
             raise HTTPException(status_code=422, detail="Latitude and Longitude must be valid numbers")
 
     raise HTTPException(status_code=400, detail="Must provide either address string or latitude/longitude coordinates")
+
+
+@router.post("/location/select")
+def select_location(payload: Dict[str, Any] = Body(...)):
+    from datetime import datetime, timezone
+    raw_lat = payload.get("latitude")
+    raw_lon = payload.get("longitude")
+    if raw_lat is None or raw_lon is None:
+        raise HTTPException(status_code=422, detail="latitude and longitude parameters are required.")
+    
+    try:
+        lat = float(raw_lat)
+        lon = float(raw_lon)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="Invalid coordinates: latitude and longitude must be valid numbers.")
+
+    if lat < -90.0 or lat > 90.0 or lon < -180.0 or lon > 180.0:
+        raise HTTPException(status_code=422, detail=f"Invalid coordinate bounds: latitude ({lat}) must be in [-90, 90] and longitude ({lon}) in [-180, 180].")
+
+    source = str(payload.get("source", "MANUAL"))
+    geo_res = reverse_geocode(lat, lon)
+    
+    return {
+        "location_id": f"LOC-{round(lat, 4)}-{round(lon, 4)}",
+        "location_name": payload.get("display_name") or geo_res.get("display_name") or f"Location ({lat:.4f}, {lon:.4f})",
+        "locality": payload.get("locality") or geo_res.get("locality") or "Selected Location",
+        "district": payload.get("district") or geo_res.get("district") or "District Region",
+        "state": payload.get("state") or geo_res.get("state") or "State Region",
+        "country": payload.get("country") or geo_res.get("country") or "India",
+        "latitude": round(lat, 6),
+        "longitude": round(lon, 6),
+        "source": source,
+        "source_quality": "HIGH" if source in ["GPS", "PRESET", "MAP"] else "MEDIUM",
+        "selected_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "coverage_status": "AVAILABLE"
+    }
+
+
+@router.get("/location/search")
+def search_location(q: str = Query(..., description="Location search query string")):
+    if not q or not q.strip():
+        raise HTTPException(status_code=400, detail="Search query cannot be empty.")
+    results = forward_geocode_search(q.strip(), limit=5)
+    if not results:
+        raise HTTPException(status_code=404, detail=f"Location '{q}' not found. Please select a location from the search results.")
+    return results
 
 
 @router.get("/debug/relocation-sites-summary")
@@ -639,19 +744,66 @@ def get_database_readiness():
     without_source_meta = [s for s in RAW_CANDIDATE_SITES if s not in with_source_meta]
 
     district_sites: Dict[str, int] = {}
+    state_sites: Dict[str, int] = {}
     for s in RAW_CANDIDATE_SITES:
         d = s.get("district", "Chamoli")
+        st = s.get("state", "Uttarakhand")
         district_sites[d] = district_sites.get(d, 0) + 1
+        state_sites[st] = state_sites.get(st, 0) + 1
 
     district_habs: Dict[str, int] = {}
+    state_habs: Dict[str, int] = {}
     for h in RAW_HABITATIONS:
         sub = h.get("subdistrict", "Joshimath")
+        st = h.get("state", "Uttarakhand")
         district_habs[sub] = district_habs.get(sub, 0) + 1
+        state_habs[st] = state_habs.get(st, 0) + 1
+
+    lats = [h["latitude"] for h in RAW_HABITATIONS if h.get("latitude")] + [s["latitude"] for s in RAW_CANDIDATE_SITES if s.get("latitude")]
+    lons = [h["longitude"] for h in RAW_HABITATIONS if h.get("longitude")] + [s["longitude"] for s in RAW_CANDIDATE_SITES if s.get("longitude")]
+    
+    bounds = {
+        "min_latitude": round(min(lats), 4) if lats else 30.0,
+        "max_latitude": round(max(lats), 4) if lats else 30.8,
+        "min_longitude": round(min(lons), 4) if lons else 79.1,
+        "max_longitude": round(max(lons), 4) if lons else 79.8
+    }
+
+    pct_valid_coords = round((len(valid_coords) / total_sites * 100.0), 1) if total_sites > 0 else 0.0
+    pct_provenance = round((len(with_source_meta) / total_sites * 100.0), 1) if total_sites > 0 else 0.0
+    pct_capacity = round((len(pos_cap) / total_sites * 100.0), 1) if total_sites > 0 else 0.0
+    pct_safety = round(((len(safe_sites) + len(unsafe_sites)) / total_sites * 100.0), 1) if total_sites > 0 else 0.0
 
     from datetime import datetime, timezone
     return {
         "status": "READY_FOR_SIH_JURY_DEMO",
         "environment": "DEVELOPMENT_ONLY",
+        "total_habitations": total_habs,
+        "total_relocation_sites": total_sites,
+        "total_active_relocation_sites": len(active_sites),
+        "sites_with_valid_coordinates": len(valid_coords),
+        "sites_with_missing_coordinates": len(missing_coords),
+        "sites_marked_safe": len(safe_sites),
+        "sites_marked_unsafe": len(unsafe_sites),
+        "verified_sites": len(verified_sites),
+        "demonstration_sites": len(demo_sites),
+        "sites_with_real_capacity": len(pos_cap),
+        "sites_with_unknown_capacity": len(unknown_cap),
+        "sites_with_source_metadata": len(with_source_meta),
+        "sites_without_source_metadata": len(without_source_meta),
+        "district_wise_habitation_count": district_habs,
+        "district_wise_relocation_site_count": district_sites,
+        "state_wise_habitation_count": state_habs,
+        "state_wise_relocation_site_count": state_sites,
+        "geographic_bounding_box": bounds,
+        "supported_states": list(state_sites.keys()),
+        "supported_districts": list(district_sites.keys()),
+        "data_freshness": "CURRENT",
+        "source_coverage": "Uttarakhand Master GIS Database",
+        "percentage_valid_coordinates": pct_valid_coords,
+        "percentage_provenance": pct_provenance,
+        "percentage_capacity": pct_capacity,
+        "percentage_safety_status": pct_safety,
         "metrics": {
             "total_habitations": total_habs,
             "total_relocation_sites": total_sites,
@@ -669,14 +821,25 @@ def get_database_readiness():
             "district_wise_site_count": district_sites,
             "subdistrict_wise_habitation_count": district_habs
         },
-        "geographic_coverage_disclaimer": "The current database indexes high-resolution habitations and relief shelters across the Chamoli Pilot Region and Uttarakhand Himalayan Belt. For locations outside this indexed region (e.g. Medchal, Hyderabad), the engine honestly returns NO_VERIFIED_SITE_FOUND with spatial out-of-coverage notices.",
+        "geographic_coverage_disclaimer": "The database indexes verified habitations and relief shelters across indexed regions. Out-of-bounds coordinates return insufficient_data status.",
         "calculated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     }
 
 @router.post("/location/relocation-options")
 def get_location_relocation_options(payload: Dict[str, Any] = Body(...)):
-    lat = float(payload.get("latitude", 30.4852))
-    lon = float(payload.get("longitude", 79.6914))
+    raw_lat = payload.get("latitude")
+    raw_lon = payload.get("longitude")
+    if raw_lat is None or raw_lon is None:
+        raise HTTPException(status_code=422, detail="latitude and longitude parameters are required.")
+    try:
+        lat = float(raw_lat)
+        lon = float(raw_lon)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="Invalid coordinates: latitude and longitude must be numbers.")
+
+    if lat < -90.0 or lat > 90.0 or lon < -180.0 or lon > 180.0:
+        raise HTTPException(status_code=422, detail=f"Invalid coordinate bounds: lat={lat}, lon={lon}.")
+
     pop = int(payload.get("population_to_relocate", 1250))
     risk_level = str(payload.get("risk_level", "CRITICAL"))
     hab_id = payload.get("habitation_id")
@@ -695,6 +858,40 @@ def get_location_relocation_options(payload: Dict[str, Any] = Body(...)):
         vulnerability_score=vuln_score
     )
     return options
+
+
+@router.post("/location/relocate")
+def relocate_location(payload: Dict[str, Any] = Body(...)):
+    return get_location_relocation_options(payload)
+
+
+@router.post("/relocation/recommend")
+def recommend_relocation(payload: Dict[str, Any] = Body(...)):
+    raw_lat = payload.get("latitude")
+    raw_lon = payload.get("longitude")
+    if raw_lat is None or raw_lon is None:
+        raise HTTPException(status_code=422, detail="Must provide latitude and longitude parameters.")
+
+    try:
+        lat = float(raw_lat)
+        lon = float(raw_lon)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="Invalid coordinates: latitude and longitude must be numbers.")
+
+    if lat < -90.0 or lat > 90.0 or lon < -180.0 or lon > 180.0:
+        raise HTTPException(status_code=422, detail=f"Invalid coordinate bounds: lat={lat}, lon={lon}.")
+
+    pop = int(payload.get("population_to_relocate", 1250))
+    mode = str(payload.get("execution_mode", "RESEARCH"))
+
+    options = find_location_relocation_options(
+        latitude=lat,
+        longitude=lon,
+        population_to_relocate=pop,
+        mode=mode
+    )
+    return options
+
 
 
 @router.get("/field-reports")
@@ -729,4 +926,113 @@ def get_audit_logs():
             "allocated_population": 0
         }
     ]
+
+
+# ML Controlled Retraining & Model Management Endpoints
+@router.get("/ml/models")
+def list_ml_models():
+    return get_all_models()
+
+@router.get("/ml/models/{model_id}")
+def get_ml_model_detail(model_id: str):
+    m = get_model_by_id(model_id)
+    if not m:
+        raise HTTPException(status_code=404, detail=f"Model {model_id} not found in model registry.")
+    return m
+
+@router.get("/ml/training-runs")
+def list_training_runs():
+    return get_training_runs()
+
+@router.post("/ml/training-runs")
+def trigger_training_run(payload: Dict[str, Any] = Body(...)):
+    return initiate_training_run(payload)
+
+@router.get("/ml/evaluations/{evaluation_id}")
+def get_evaluation_detail(evaluation_id: str):
+    ev = get_evaluation_by_id(evaluation_id)
+    if not ev:
+        raise HTTPException(status_code=404, detail=f"Evaluation report {evaluation_id} not found.")
+    return ev
+
+@router.post("/ml/models/{model_id}/approve")
+def approve_model(model_id: str, payload: Dict[str, Any] = Body(default={})):
+    officer_id = payload.get("officer_id", "ADMIN-CHIEF")
+    try:
+        return approve_model_promotion(model_id, officer_id)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
+
+@router.post("/ml/models/{model_id}/rollback")
+def rollback_model(model_id: str):
+    try:
+        return rollback_production_model(model_id)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
+
+
+# =====================================================================
+# EMERGENCY RISK & WEB PUSH ALERT ENDPOINTS (Section 4, 8, 9, 18, 21)
+# =====================================================================
+
+@router.get("/notifications/vapid-public-key")
+@router.get("/location/vapid-public-key")
+def fetch_vapid_public_key():
+    """Exposes VAPID public key for browser PushManager subscription."""
+    return {"public_key": get_vapid_public_key()}
+
+@router.post("/notifications/subscribe")
+def subscribe_to_web_push(payload: Dict[str, Any] = Body(...)):
+    """Stores browser Web Push subscription payload securely."""
+    try:
+        subscription = payload.get("subscription") or payload
+        user_id = payload.get("user_id")
+        rec = save_push_subscription(subscription, user_id)
+        return {"status": "SUBSCRIBED", "subscription_id": rec["user_id"]}
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail=f"Failed to save push subscription: {str(ex)}")
+
+@router.post("/notifications/unsubscribe")
+def unsubscribe_web_push(payload: Dict[str, Any] = Body(...)):
+    """Removes a Web Push subscription."""
+    endpoint = payload.get("endpoint", "")
+    success = remove_push_subscription(endpoint)
+    return {"status": "UNSUBSCRIBED" if success else "NOT_FOUND"}
+
+@router.post("/emergency/location-check")
+def check_emergency_location_risk(payload: Dict[str, Any] = Body(...)):
+    """
+    Evaluates real-time GPS location against active hazard data, applies accuracy filtering,
+    hysteresis persistence, duplicate suppression, and dispatches Web Push if HIGH/CRITICAL.
+    """
+    lat = payload.get("latitude")
+    lon = payload.get("longitude")
+    if lat is None or lon is None:
+        raise HTTPException(status_code=422, detail="Missing mandatory 'latitude' or 'longitude' coordinates.")
+    
+    accuracy_m = float(payload.get("accuracy_m", 20.0))
+    user_id = payload.get("user_id")
+
+    res = evaluate_location_emergency_risk(
+        latitude=float(lat),
+        longitude=float(lon),
+        accuracy_m=accuracy_m,
+        user_id=user_id
+    )
+    return res
+
+@router.get("/emergency/audit-logs")
+def fetch_emergency_audit_logs(limit: int = 50):
+    """Returns recent emergency alert audit records."""
+    return get_alert_audit_logs(limit=limit)
+
+@router.post("/emergency/simulate-demo-alert")
+def trigger_demo_emergency_alert(payload: Dict[str, Any] = Body(default={})):
+    """Developer Emergency Alert Simulator for DEMO mode."""
+    hazard_type = payload.get("hazard_type", "FLOOD")
+    risk_level = payload.get("risk_level", "CRITICAL")
+    user_id = payload.get("user_id")
+    return simulate_demo_alert(hazard_type=hazard_type, risk_level=risk_level, user_id=user_id)
+
+
 

@@ -1,12 +1,23 @@
 import os
 
 class Settings:
-    PROJECT_NAME: str = "AASHRAY - Disaster Management & Relocation Decision Support System"
-    VERSION: str = "1.0.0"
+    PROJECT_NAME: str = "AASHRAY - Location-Agnostic AI Risk & Relocation Engine"
+    VERSION: str = "2.1.0"
     API_V1_STR: str = "/api"
-    PILOT_REGION: str = "Chamoli District, Uttarakhand"
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./aashray.db")
     CORS_ORIGINS: list = ["*"]
+    
+    # Location-Agnostic System Configuration
+    SYSTEM_CONFIG: dict = {
+        "default_region": None,
+        "supported_regions": ["Chamoli District, Uttarakhand", "Garhwal Himalayan Belt, Uttarakhand"],
+        "data_coverage_mode": "verified_only",
+        "allow_demo_data": False,
+        "require_source_metadata": True,
+        "require_coordinates": True,
+        "require_capacity_for_relocation": True,
+        "minimum_data_quality_score": 0.70
+    }
     
     # Default Configurable Multi-Hazard Risk Component Weights
     DEFAULT_WEIGHTS: dict = {
@@ -22,3 +33,4 @@ class Settings:
     }
 
 settings = Settings()
+

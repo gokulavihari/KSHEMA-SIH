@@ -65,6 +65,36 @@ export async function resolveLocation(payload: { address?: string; latitude?: nu
   return res.json();
 }
 
+export async function selectLocation(payload: {
+  latitude: number;
+  longitude: number;
+  source?: string;
+  display_name?: string;
+  locality?: string;
+  district?: string;
+  state?: string;
+}) {
+  const res = await fetch(`${API_BASE}/location/select`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Failed to select location' }));
+    throw new Error(err.detail || 'Failed to select location');
+  }
+  return res.json();
+}
+
+export async function searchLocation(query: string) {
+  const res = await fetch(`${API_BASE}/location/search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Search failed' }));
+    throw new Error(err.detail || 'Search failed');
+  }
+  return res.json();
+}
+
 export async function fetchLocationRelocationOptions(
   latitude: number,
   longitude: number,
@@ -222,3 +252,82 @@ export async function fetchAuditLogs() {
   if (!res.ok) throw new Error('Failed to fetch audit logs');
   return res.json();
 }
+
+export async function fetchDataCoverage() {
+  const res = await fetch(`${API_BASE}/coverage`);
+  if (!res.ok) throw new Error('Failed to fetch data coverage information');
+  return res.json();
+}
+
+export async function fetchSystemConfig() {
+  const res = await fetch(`${API_BASE}/config`);
+  if (!res.ok) throw new Error('Failed to fetch system configuration');
+  return res.json();
+}
+
+export async function fetchMLModels() {
+  const res = await fetch(`${API_BASE}/ml/models`);
+  if (!res.ok) throw new Error('Failed to fetch ML models');
+  return res.json();
+}
+
+export async function fetchMLTrainingRuns() {
+  const res = await fetch(`${API_BASE}/ml/training-runs`);
+  if (!res.ok) throw new Error('Failed to fetch ML training runs');
+  return res.json();
+}
+
+// Emergency Alert & Web Push API Helpers
+export async function fetchVapidPublicKey(): Promise<string> {
+  const res = await fetch(`${API_BASE}/notifications/vapid-public-key`);
+  if (!res.ok) throw new Error('Failed to fetch VAPID public key');
+  const data = await res.json();
+  return data.public_key;
+}
+
+export async function subscribeWebPush(subscription: any, userId?: string) {
+  const res = await fetch(`${API_BASE}/notifications/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subscription, user_id: userId })
+  });
+  if (!res.ok) throw new Error('Failed to subscribe to Web Push notifications');
+  return res.json();
+}
+
+export async function unsubscribeWebPush(endpoint: string) {
+  const res = await fetch(`${API_BASE}/notifications/unsubscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint })
+  });
+  if (!res.ok) throw new Error('Failed to unsubscribe from Web Push');
+  return res.json();
+}
+
+export async function checkEmergencyLocationRisk(latitude: number, longitude: number, accuracy_m: number = 20, userId?: string) {
+  const res = await fetch(`${API_BASE}/emergency/location-check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ latitude, longitude, accuracy_m, user_id: userId })
+  });
+  if (!res.ok) throw new Error('Failed to evaluate location emergency risk');
+  return res.json();
+}
+
+export async function fetchEmergencyAuditLogs(limit: number = 50) {
+  const res = await fetch(`${API_BASE}/emergency/audit-logs?limit=${limit}`);
+  if (!res.ok) throw new Error('Failed to fetch emergency audit logs');
+  return res.json();
+}
+
+export async function triggerDemoEmergencyAlert(hazardType: string = 'FLOOD', riskLevel: string = 'CRITICAL', userId?: string) {
+  const res = await fetch(`${API_BASE}/emergency/simulate-demo-alert`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hazard_type: hazardType, risk_level: riskLevel, user_id: userId })
+  });
+  if (!res.ok) throw new Error('Failed to trigger demo emergency alert');
+  return res.json();
+}
+

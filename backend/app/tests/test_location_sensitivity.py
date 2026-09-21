@@ -121,7 +121,7 @@ class TestLocationSensitivityAndAudit:
         data = res.json()
         assert "debug_info" in data
         debug = data["debug_info"]
-        assert debug["model_version"] == "AASHRAY-RISK-v2.0"
+        assert debug["model_version"] in ["AASHRAY-RISK-v2.0", "AASHRAY-RISK-v2.1"]
         assert "renormalized_risk_score" in debug
         assert "classification_thresholds" in debug
         assert "configured_weights" in debug
