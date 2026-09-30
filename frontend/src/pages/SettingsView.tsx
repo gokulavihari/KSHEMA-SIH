@@ -42,7 +42,7 @@ export const SettingsView: React.FC = () => {
       <div>
         <h1 className="text-2xl font-extrabold text-slate-100 flex items-center gap-2">
           <Settings className="w-6 h-6 text-cyan-400" />
-          AASHRAY Location-Agnostic Engine Settings
+          Kshema Location-Agnostic Engine Settings
         </h1>
         <p className="text-xs text-slate-400 mt-1">
           Dynamic location selection, data coverage mode, API parameters, and model validation cards.

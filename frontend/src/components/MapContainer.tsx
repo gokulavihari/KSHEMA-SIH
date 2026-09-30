@@ -4,6 +4,13 @@ import 'leaflet/dist/leaflet.css';
 import { Habitation, CandidateSite, LocationAssessment } from '../types';
 
 interface MapProps {
+  gpsUserLocation?: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    displayName?: string;
+    timestamp?: number;
+  };
   userLocation?: {
     latitude: number;
     longitude: number;
@@ -62,6 +69,7 @@ const getRiskColor = (level?: string | null, score?: number | null) => {
 };
 
 export const MapContainer: React.FC<MapProps> = ({
+  gpsUserLocation,
   userLocation,
   assessment,
   habitations = [],
@@ -160,7 +168,7 @@ export const MapContainer: React.FC<MapProps> = ({
 
       // OpenStreetMap Tile Layer with Command Center Dark Styling
       const osmTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | AASHRAY GIS',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | KSHEMA GIS',
         maxZoom: 19,
         className: 'dark-map-tiles',
       });
@@ -236,6 +244,66 @@ export const MapContainer: React.FC<MapProps> = ({
           );
         },
       }).addTo(layerGroup);
+    }
+
+    // 1.5 Render Real Device GPS Location Marker (Visually Distinct Blue Marker + Accuracy Circle)
+    if (gpsUserLocation && gpsUserLocation.latitude && gpsUserLocation.longitude) {
+      const gLat = gpsUserLocation.latitude;
+      const gLon = gpsUserLocation.longitude;
+      const accuracyM = gpsUserLocation.accuracy || 15.0;
+
+      // If no selected location is active, center map on actual device GPS
+      if (!userLocation || !userLocation.latitude) {
+        map.setView([gLat, gLon], map.getZoom() < 12 ? 13 : map.getZoom());
+      }
+
+      // Blue Accuracy Circle for Real GPS Device Location
+      const gpsAccuracyCircle = L.circle([gLat, gLon], {
+        radius: Math.max(20, accuracyM),
+        color: '#3b82f6',
+        fillColor: '#60a5fa',
+        fillOpacity: 0.18,
+        weight: 1.5,
+        dashArray: '4, 4',
+        interactive: false,
+      });
+      gpsAccuracyCircle.addTo(layerGroup);
+
+      // Distinct 🔵 CURRENT DEVICE LOCATION Marker
+      const gpsMarkerIcon = L.divIcon({
+        className: 'custom-real-gps-marker',
+        html: `
+          <div style="position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+            <div style="position: absolute; width: 36px; height: 36px; background: rgba(59, 130, 246, 0.35); border-radius: 50%; animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+            <div style="position: absolute; width: 18px; height: 18px; background: #2563eb; border: 3px solid #ffffff; border-radius: 50%; box-shadow: 0 0 14px rgba(37, 99, 235, 0.9);"></div>
+            <div style="position: absolute; top: -22px; background: #1e3a8a; color: #ffffff; border: 1px solid #60a5fa; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; white-space: nowrap; font-family: sans-serif; box-shadow: 0 2px 6px rgba(0,0,0,0.6);">
+              📍 YOU ARE HERE
+            </div>
+          </div>
+        `,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+
+      const gpsPopupContent = `
+        <div style="padding: 4px; font-family: sans-serif; color: #0f172a; min-width: 200px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:6px;">
+            <span style="font-size:10px; font-weight:bold; background:#dbeafe; color:#1e40af; padding:1px 6px; border-radius:3px;">📍 YOUR CURRENT LOCATION</span>
+            <span style="font-size:10px; color:#166534; font-weight:bold;">LIVE GPS</span>
+          </div>
+          <strong style="font-size:12px; color:#0f172a; display:block;">${gpsUserLocation.displayName || 'Current Device Location'}</strong>
+          <div style="font-family:monospace; font-size:11px; color:#475569; margin-top:2px;">
+            ${gLat.toFixed(6)}° N, ${gLon.toFixed(6)}° E
+          </div>
+          <div style="margin-top:6px; background:#f0f9ff; border:1px solid #bae6fd; color:#0369a1; padding:4px 6px; border-radius:4px; font-size:10px; font-weight:600;">
+            Device Accuracy: ~${Math.round(accuracyM)} meters
+          </div>
+        </div>
+      `;
+
+      const gpsMarker = L.marker([gLat, gLon], { icon: gpsMarkerIcon, zIndexOffset: 1000 });
+      gpsMarker.bindPopup(gpsPopupContent);
+      gpsMarker.addTo(layerGroup);
     }
 
     // 2. Render Selected Location Risk Assessment Area & Markers
@@ -451,15 +519,20 @@ export const MapContainer: React.FC<MapProps> = ({
           fillOpacity: 0.85,
         });
 
+        const googleNavUrl = (site.latitude && site.longitude && -90 <= site.latitude && site.latitude <= 90 && -180 <= site.longitude && site.longitude <= 180)
+          ? `https://www.google.com/maps/dir/?api=1&destination=${site.latitude},${site.longitude}`
+          : null;
+
         const popupHtml = `
           <div style="font-size:12px; font-family:sans-serif; padding:4px;">
             <div style="font-weight:bold; color:${color}; font-size:13px;">${site.name}</div>
             <div style="margin-top:2px; color:#cbd5e1;">Type: <b>${site.site_type}</b></div>
             <div style="margin-top:2px;">Status: <b>${isSafe ? 'ELIGIBLE SAFE SITE' : 'REJECTED (UNSAFE)'}</b></div>
             ${isSafe ? `
-              <div style="margin-top:4px; color:#34d399;">Effective Capacity: <b>${site.capacity?.effective_capacity || 0} persons</b></div>
+              <div style="margin-top:4px; color:#34d399;">Effective Capacity: <b>${site.capacity?.effective_capacity || site.effective_capacity || 0} persons</b></div>
               <div style="margin-top:2px; color:#fbbf24;">Bottleneck: <b>${site.capacity?.bottleneck || 'None'}</b></div>
               <div style="margin-top:2px;">Safety Score: <b>${site.safety_score}/100</b></div>
+              ${googleNavUrl ? `<div style="margin-top:8px;"><a href="${googleNavUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#059669; color:white; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:11px; text-decoration:none;">GET DIRECTIONS 🗺️</a></div>` : ''}
             ` : `
               <div style="margin-top:4px; color:#f87171; font-weight:bold;">${site.rejection_reason || 'Unsafe Hazard Zone'}</div>
             `}

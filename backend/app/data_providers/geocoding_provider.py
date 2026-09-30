@@ -5,7 +5,7 @@ import json
 import re
 from typing import Dict, Any, Optional, List
 
-USER_AGENT = "AASHRAY_Disaster_Support_Platform/1.1 (sih2026@aashray.gov.in)"
+USER_AGENT = "Kshema_Disaster_Support_Platform/1.1 (sih2026@kshema.gov.in)"
 
 _GEO_CACHE: Dict[str, Any] = {}
 

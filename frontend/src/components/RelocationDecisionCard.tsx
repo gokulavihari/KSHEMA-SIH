@@ -258,7 +258,7 @@ export const RelocationDecisionCard: React.FC<Props> = ({
 
                   {/* Why Selected */}
                   <div className="space-y-1">
-                    <div className="text-[11px] font-bold text-gray-300">Why AASHRAY Selected This Location:</div>
+                    <div className="text-[11px] font-bold text-gray-300">Why Kshema Selected This Location:</div>
                     <div className="space-y-1 text-[11px]">
                       {whySelectedList.map((reason: string, i: number) => (
                         <div key={i} className="flex items-start gap-1.5 text-gray-300">
@@ -271,7 +271,7 @@ export const RelocationDecisionCard: React.FC<Props> = ({
 
                   {/* Disclaimer Note */}
                   <div className="p-2 bg-gray-900/80 border border-gray-800 rounded text-[10px] text-gray-400 italic">
-                    «AASHRAY decision-support engine recommends candidates using hazard, suitability, capacity, and proximity factors. Field verification and official approval by DDMA/SDMA are required before deployment.»
+                    «Kshema decision-support engine recommends candidates using hazard, suitability, capacity, and proximity factors. Field verification and official approval by DDMA/SDMA are required before deployment.»
                   </div>
                 </div>
               );

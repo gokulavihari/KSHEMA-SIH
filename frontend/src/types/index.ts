@@ -146,6 +146,11 @@ export interface LocationAssessment {
   };
   risk_score: number | null;
   risk_level: 'LOW' | 'MODERATE' | 'HIGH' | 'VERY HIGH' | 'CRITICAL' | 'UNKNOWN' | string;
+  risk?: {
+    score: number | null;
+    level: string;
+    explanation?: string;
+  };
   confidence: number | null;
   confidence_score?: number | null;
   dominant_hazard: string;
@@ -153,10 +158,13 @@ export interface LocationAssessment {
   decision?: DecisionInfo;
   relocation?: {
     required: boolean;
+    recommended?: boolean;
     primary_trigger?: string;
     status_message?: string;
     nearest_feasible_site?: LocationRelocationOptionItem | null;
+    primary_site?: LocationRelocationOptionItem | null;
     options?: LocationRelocationOptionItem[];
+    alternative_sites?: LocationRelocationOptionItem[];
     plan_status?: string;
   };
   factors: FactorContribution[];
@@ -222,6 +230,8 @@ export interface LocationRelocationOptionItem {
   direction?: string;
   bearing_degrees?: number;
   directional_instruction?: string;
+  google_maps_url?: string;
+  navigation_url?: string;
   safety_score?: number;
   suitability_score?: number;
   composite_score?: number;
@@ -369,6 +379,7 @@ export interface CandidateSite {
   safety_score: number;
   suitability_score: number;
   capacity: CapacityBreakdown;
+  effective_capacity?: number;
   used_capacity: number;
   remaining_capacity: number;
   utilization_percentage: number;
@@ -473,3 +484,150 @@ export interface FieldReport {
   timestamp: string;
   officer_id: string;
 }
+
+// Kshema National GIS Module Types
+export type RiskSeverity = 'MODERATE' | 'HIGH' | 'EXTREMELY HIGH' | 'CRITICAL';
+
+export interface WhyRiskyFactor {
+  factor: string;
+  weight: number;
+  contribution: number;
+  description: string;
+  severity?: string;
+}
+
+export interface HistoricalAssessmentEpoch {
+  year: number;
+  risk_level: string;
+  risk_score: number;
+  event?: string;
+}
+
+export interface RecommendedSafeSite {
+  site_id: string;
+  name: string;
+  state: string;
+  district: string;
+  latitude: number;
+  longitude: number;
+  distance_km: number;
+  road_distance_km?: number;
+  travel_time_minutes?: number;
+  direction: string;
+  bearing_degrees: number;
+  safety_score: number;
+  suitability_score: number;
+  capacity_total: number;
+  capacity_used: number;
+  capacity_available: number;
+  required_capacity?: number;
+  capacity_gap?: number;
+  capacity_status?: string;
+  capacity_utilization_pct: number;
+  destination_risk?: string;
+  status?: string;
+  road_accessibility: string;
+  healthcare_distance_km?: number;
+  school_distance_km?: number;
+  essential_services?: {
+    healthcare?: string;
+    education?: string;
+    emergency_services?: string;
+    water_sanitation?: string;
+    electricity?: string;
+    transport?: string;
+  };
+  verification_status: string;
+  source_reference?: string;
+  search_radius_used_km?: number;
+  selection_reasons?: string[];
+  rejection_reasons?: string[];
+}
+
+export type PriorityCategory = 'IMMEDIATE REVIEW' | 'PRIORITY ASSESSMENT' | 'MONITOR';
+
+export interface NationalGISLocation {
+  id: string;
+  location_name: string;
+  state: string;
+  district: string;
+  latitude: number;
+  longitude: number;
+  population: number;
+  vulnerable_population: number;
+  primary_hazard: string;
+  secondary_hazards?: string[];
+  risk_score: number;
+  risk_level: RiskSeverity;
+  risk_radius_km: number;
+  priority_score?: number;
+  priority_category?: PriorityCategory;
+  priority_rank?: number;
+  priority_reasons?: string[];
+  priority_breakdown?: {
+    severity_points: number;
+    risk_score_points: number;
+    population_points: number;
+    vulnerability_points: number;
+    relocation_points: number;
+  };
+  historical_records?: HistoricalAssessmentEpoch[];
+  why_risky_factors?: WhyRiskyFactor[];
+  recommended_safe_site?: RecommendedSafeSite | null;
+  assessment_date?: string;
+  verification_status?: string;
+  confidence?: string;
+  data_source?: string;
+}
+
+export interface StateGISSummary {
+  state: string;
+  state_code?: string;
+  center: [number, number];
+  default_zoom: number;
+  bbox?: [number, number, number, number] | null;
+  total_assessed_locations: number;
+  moderate_count: number;
+  high_count: number;
+  extremely_high_count: number;
+  critical_count: number;
+  population_at_risk: number;
+  districts_with_data: string[];
+  all_districts: string[];
+  coverage_status: string;
+  last_updated: string;
+}
+
+export interface NationalGISOverview {
+  title: string;
+  system_status: string;
+  default_view: string;
+  center: [number, number];
+  default_zoom: number;
+  bounding_box: [number, number, number, number];
+  coverage: {
+    total_assessed_locations: number;
+    states_covered_count: number;
+    states_covered: string[];
+    honest_coverage_statement: string;
+    last_updated: string;
+  };
+  severity_totals: {
+    moderate: number;
+    high: number;
+    extremely_high: number;
+    critical: number;
+    all: number;
+  };
+  total_population_at_risk: number;
+  state_summaries: Record<string, {
+    state: string;
+    total_locations: number;
+    moderate_count: number;
+    high_count: number;
+    extremely_high_count: number;
+    critical_count: number;
+    population_at_risk: number;
+  }>;
+}
+

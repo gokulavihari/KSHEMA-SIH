@@ -1,13 +1,13 @@
-// AASHRAY Emergency Safety Alerts Service Worker v1.1
+// KSHEMA Emergency Safety Alerts Service Worker v1.1
 // Handles Web Push events and notification click navigation
 
 self.addEventListener("install", (event) => {
-  logger_info("AASHRAY Service Worker installing...");
+  logger_info("KSHEMA Service Worker installing...");
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-  logger_info("AASHRAY Service Worker activated.");
+  logger_info("KSHEMA Service Worker activated.");
   event.waitUntil(self.clients.claim());
 });
 
@@ -16,11 +16,11 @@ self.addEventListener("push", (event) => {
   logger_info("Received Web Push event.");
   
   let payload = {
-    title: "🚨 AASHRAY Emergency Alert",
-    body: "Disaster risk detected near your location. Open AASHRAY for your safety plan.",
+    title: "🚨 KSHEMA Emergency Alert",
+    body: "Disaster risk detected near your location. Open Kshema for your safety plan.",
     icon: "/favicon.svg",
     badge: "/favicon.svg",
-    tag: "aashray-emergency-alert",
+    tag: "kshema-emergency-alert",
     data: { url: "/?view=safety-plan" }
   };
 
@@ -36,7 +36,7 @@ self.addEventListener("push", (event) => {
     body: payload.body,
     icon: payload.icon || "/favicon.svg",
     badge: payload.badge || "/favicon.svg",
-    tag: payload.tag || "aashray-alert",
+    tag: payload.tag || "kshema-alert",
     renotify: true,
     requireInteraction: payload.data?.risk_level === "CRITICAL",
     data: payload.data || { url: "/?view=safety-plan" },
@@ -64,7 +64,7 @@ self.addEventListener("notificationclick", (event) => {
         if ("focus" in client) {
           client.focus();
           client.postMessage({
-            type: "AASHRAY_NOTIFICATION_CLICKED",
+            type: "KSHEMA_NOTIFICATION_CLICKED",
             payload: event.notification.data
           });
           return;
@@ -79,5 +79,5 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 function logger_info(...args) {
-  console.log("[AASHRAY ServiceWorker]", ...args);
+  console.log("[KSHEMA ServiceWorker]", ...args);
 }

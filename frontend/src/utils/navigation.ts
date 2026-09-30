@@ -1,5 +1,5 @@
 /**
- * Navigation & Google Maps Integration Utilities for AASHRAY
+ * Navigation & Google Maps Integration Utilities for Kshema
  * Provides strict coordinate validation and Google Maps URL construction.
  */
 

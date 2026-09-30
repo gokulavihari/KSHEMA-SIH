@@ -1,3 +1,3 @@
 """
-AASHRAY Backend Application Package
+Kshema Backend Application Package
 """

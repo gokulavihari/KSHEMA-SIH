@@ -6,6 +6,17 @@ import {
 
 import { API_BASE, API_TARGET } from '../config';
 
+export function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem('aashray_executive_token');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 export async function checkBackendHealth(): Promise<{ healthy: boolean; url: string; error?: string }> {
   try {
     const res = await fetch(`${API_BASE}/health`, { method: 'GET' });
@@ -95,6 +106,71 @@ export async function searchLocation(query: string) {
   return res.json();
 }
 
+export async function searchPublicLocation(query: string) {
+  const res = await fetch(`${API_BASE}/public/location/search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Location search failed' }));
+    throw new Error(err.detail || 'Location search failed');
+  }
+  return res.json();
+}
+
+export async function fetchPublicLocationAssessment(
+  latitude: number,
+  longitude: number,
+  accuracyMeters: number = 15.0,
+  source: string = 'GPS',
+  assessmentRadiusM: number = 1000.0
+): Promise<LocationAssessment> {
+  const res = await fetch(`${API_BASE}/public/location-assessment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      latitude,
+      longitude,
+      accuracy_meters: accuracyMeters,
+      source,
+      assessment_radius_m: assessmentRadiusM
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Failed to compute location assessment' }));
+    throw new Error(err.detail || 'Failed to compute location assessment');
+  }
+  return res.json();
+}
+
+export async function fetchPublicLocationRisk(
+  latitude: number,
+  longitude: number,
+  accuracyMeters: number = 15.0,
+  source: string = 'GPS'
+): Promise<LocationAssessment> {
+  return fetchPublicLocationAssessment(latitude, longitude, accuracyMeters, source);
+}
+
+export async function checkPublicLocationAlerts(
+  latitude: number,
+  longitude: number,
+  accuracyMeters: number = 15.0
+) {
+  const res = await fetch(`${API_BASE}/public/location-alerts/check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      latitude,
+      longitude,
+      accuracy_meters: accuracyMeters
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Failed to evaluate location alert status' }));
+    throw new Error(err.detail || 'Failed to evaluate location alert status');
+  }
+  return res.json();
+}
+
+
 export async function fetchLocationRelocationOptions(
   latitude: number,
   longitude: number,
@@ -174,7 +250,7 @@ export async function fetchDatabaseReadinessSummary() {
 export async function generateRelocationPlan(habitationId: string, populationOverride?: number): Promise<RelocationPlan> {
   const res = await fetch(`${API_BASE}/relocation-plan`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       habitation_id: habitationId,
       population_override: populationOverride
@@ -187,7 +263,7 @@ export async function generateRelocationPlan(habitationId: string, populationOve
 export async function runRainfallSimulation(multiplier: number) {
   const res = await fetch(`${API_BASE}/simulate/extreme-rainfall`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       rainfall_multiplier: multiplier,
       severity_label: `${multiplier}x Scenario`
@@ -198,7 +274,10 @@ export async function runRainfallSimulation(multiplier: number) {
 }
 
 export async function resetSimulation() {
-  const res = await fetch(`${API_BASE}/simulate/reset`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/simulate/reset`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
   if (!res.ok) throw new Error('Failed to reset simulation');
   return res.json();
 }
@@ -324,10 +403,116 @@ export async function fetchEmergencyAuditLogs(limit: number = 50) {
 export async function triggerDemoEmergencyAlert(hazardType: string = 'FLOOD', riskLevel: string = 'CRITICAL', userId?: string) {
   const res = await fetch(`${API_BASE}/emergency/simulate-demo-alert`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ hazard_type: hazardType, risk_level: riskLevel, user_id: userId })
   });
   if (!res.ok) throw new Error('Failed to trigger demo emergency alert');
   return res.json();
 }
+
+// ==========================================
+// PUBLIC VIEWERS API HELPERS (UNAUTHENTICATED)
+// ==========================================
+
+export async function fetchPublicDashboard() {
+  const res = await fetch(`${API_BASE}/public/dashboard`);
+  if (!res.ok) throw new Error('Failed to fetch public dashboard data');
+  return res.json();
+}
+
+export async function fetchPublicMap(search?: string) {
+  const url = search ? `${API_BASE}/public/map?search=${encodeURIComponent(search)}` : `${API_BASE}/public/map`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch public map features');
+  return res.json();
+}
+
+export async function fetchPublicAlerts() {
+  const res = await fetch(`${API_BASE}/public/alerts`);
+  if (!res.ok) throw new Error('Failed to fetch public alerts');
+  return res.json();
+}
+
+export async function fetchPublicSafetyInfo() {
+  const res = await fetch(`${API_BASE}/public/safety-info`);
+  if (!res.ok) throw new Error('Failed to fetch public safety info');
+  return res.json();
+}
+
+// ==========================================
+// KSHEMA NATIONAL ADMINISTRATIVE GIS API
+// ==========================================
+
+export async function fetchNationalGISOverview() {
+  const res = await fetch(`${API_BASE}/gis/overview`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch national GIS overview');
+  return res.json();
+}
+
+export async function fetchSupportedStates() {
+  const res = await fetch(`${API_BASE}/gis/states`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch supported Indian states');
+  return res.json();
+}
+
+export async function fetchStateBoundariesGeoJSON() {
+  const res = await fetch(`${API_BASE}/gis/state-boundaries`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch state boundary polygons');
+  return res.json();
+}
+
+export async function fetchStateGISSummary(state: string) {
+  const res = await fetch(`${API_BASE}/gis/summary/${encodeURIComponent(state)}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error(`Failed to fetch summary for state ${state}`);
+  return res.json();
+}
+
+export async function fetchNationalGISLocations(params: {
+  state?: string;
+  district?: string;
+  risk_level?: string;
+  hazard_type?: string;
+  priority_category?: string;
+  bbox?: string;
+} = {}) {
+  const query = new URLSearchParams();
+  if (params.state && params.state !== 'ALL') query.set('state', params.state);
+  if (params.district && params.district !== 'ALL') query.set('district', params.district);
+  if (params.risk_level && params.risk_level !== 'ALL') query.set('risk_level', params.risk_level);
+  if (params.hazard_type && params.hazard_type !== 'ALL') query.set('hazard_type', params.hazard_type);
+  if (params.priority_category && params.priority_category !== 'ALL') query.set('priority_category', params.priority_category);
+  if (params.bbox) query.set('bbox', params.bbox);
+
+  const qs = query.toString();
+  const url = qs ? `${API_BASE}/gis/locations?${qs}` : `${API_BASE}/gis/locations`;
+  const res = await fetch(url, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to fetch national risk locations');
+  const data = await res.json();
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.locations)) return data.locations;
+  if (data && Array.isArray(data.features)) {
+    return data.features.map((f: any) => ({
+      ...f.properties,
+      latitude: f.geometry?.coordinates?.[1],
+      longitude: f.geometry?.coordinates?.[0]
+    }));
+  }
+  return [];
+}
+
+export async function fetchNationalGISLocationDetail(id: string) {
+  const res = await fetch(`${API_BASE}/gis/location/${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error(`Failed to fetch location detail for ${id}`);
+  return res.json();
+}
+
+export async function fetchLocationHistory(id: string) {
+  const res = await fetch(`${API_BASE}/gis/history/${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error(`Failed to fetch historical assessments for ${id}`);
+  return res.json();
+}
+
+
 

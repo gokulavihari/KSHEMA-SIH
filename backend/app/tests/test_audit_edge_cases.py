@@ -171,13 +171,18 @@ def test_edge_13_zero_capacity():
     assert res["recommended_site"] is None
     assert "Zero Remaining Capacity" in res["rejected_sites"][0]["reason"]
 
+def get_auth_header():
+    from app.core.security import create_access_token
+    token = create_access_token({"sub": "EXEC-01", "role": "EXECUTIVE"})
+    return {"Authorization": f"Bearer {token}"}
+
 def test_edge_14_negative_population():
     """Test handling of negative population input."""
     res = client.post("/api/relocation-plan", json={
         "latitude": 30.5,
         "longitude": 79.5,
         "population_to_relocate": -50
-    })
+    }, headers=get_auth_header())
     assert res.status_code in [200, 422, 400]
 
 def test_edge_15_missing_population():
@@ -185,7 +190,7 @@ def test_edge_15_missing_population():
     res = client.post("/api/relocation-plan", json={
         "latitude": 30.5,
         "longitude": 79.5
-    })
+    }, headers=get_auth_header())
     assert res.status_code == 200
     assert res.json()["source_habitation"]["population"] > 0
 

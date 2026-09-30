@@ -194,7 +194,7 @@ export const SimulationCommandView: React.FC = () => {
 
           <div className="flex justify-end">
             <Link
-              to="/map"
+              to="/executive/map"
               className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-lg shadow"
             >
               <span>INSPECT SIMULATED RED ZONES ON GIS MAP</span>

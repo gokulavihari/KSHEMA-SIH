@@ -66,3 +66,9 @@ secrets/
 private/
 config.local.*
 secret.*
+
+# Local test & audit automation scripts
+*_acceptance.cjs
+*_audit.cjs
+*.cjs
+

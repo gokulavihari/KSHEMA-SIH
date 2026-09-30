@@ -519,7 +519,7 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Handle service worker postMessage for notification clicks
   useEffect(() => {
     const handleSWMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'AASHRAY_NOTIFICATION_CLICKED') {
+      if (event.data && event.data.type === 'KSHEMA_NOTIFICATION_CLICKED') {
         const payload = event.data.payload;
         setActiveEmergencyAlert(payload);
         setShowSafetyPlanModal(true);

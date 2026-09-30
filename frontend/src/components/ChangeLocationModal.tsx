@@ -62,7 +62,7 @@ const ModalEmbeddedMap: React.FC<{
       });
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap | AASHRAY GIS',
+        attribution: '&copy; OpenStreetMap | KSHEMA GIS',
         maxZoom: 19,
         className: 'dark-map-tiles',
       }).addTo(map);

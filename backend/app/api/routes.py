@@ -1,5 +1,5 @@
 from app.data_providers.provider_registry import get_data_providers_status
-from fastapi import APIRouter, HTTPException, Query, Body
+from fastapi import APIRouter, HTTPException, Query, Body, Depends
 from typing import List, Dict, Any, Optional
 import uuid
 
@@ -31,7 +31,23 @@ from app.models.schemas import (
     AlertSchema, FieldReportSchema, SystemConfigSchema
 )
 
+from app.api.auth_routes import router as auth_router
+from app.api.public_routes import router as public_router
+from app.api.gis_routes import router as gis_router
+from app.api.deps import get_current_executive, get_current_admin
+from app.auth.create_admin import seed_default_accounts
+
+# Ensure database tables exist and default accounts are seeded
+seed_default_accounts()
+
 router = APIRouter()
+
+# Mount Auth, Public, and National GIS sub-routers
+router.include_router(auth_router)
+router.include_router(public_router)
+router.include_router(gis_router, prefix="/gis", tags=["National GIS Intelligence"])
+router.include_router(gis_router, prefix="/risk", tags=["National Risk GIS"])
+
 
 
 # In-memory storage for field reports and active state
@@ -70,7 +86,7 @@ def get_health():
 def get_system_config():
     return settings.SYSTEM_CONFIG
 
-@router.post("/config")
+@router.post("/config", dependencies=[Depends(get_current_admin)])
 def update_system_config(payload: Dict[str, Any] = Body(...)):
     for k, v in payload.items():
         if k in settings.SYSTEM_CONFIG:
@@ -446,7 +462,7 @@ def calculate_custom_risk(payload: Dict[str, Any] = Body(...)):
         "factors": risk_info["factors"]
     }
 
-@router.post("/relocation-plan")
+@router.post("/relocation-plan", dependencies=[Depends(get_current_executive)])
 def create_relocation_plan(payload: Dict[str, Any] = Body(...)):
     hab_id = payload.get("habitation_id", "HAB-001")
     pop_override = payload.get("population_override")
@@ -472,7 +488,7 @@ def get_capacity_matrix():
 def get_alerts():
     return INITIAL_ALERTS
 
-@router.post("/simulate/extreme-rainfall")
+@router.post("/simulate/extreme-rainfall", dependencies=[Depends(get_current_executive)])
 def trigger_rainfall_simulation(payload: SimulationRequestSchema):
     mult = payload.rainfall_multiplier
     CURRENT_SIMULATION_STATE["rainfall_multiplier"] = mult
@@ -929,33 +945,33 @@ def get_audit_logs():
 
 
 # ML Controlled Retraining & Model Management Endpoints
-@router.get("/ml/models")
+@router.get("/ml/models", dependencies=[Depends(get_current_executive)])
 def list_ml_models():
     return get_all_models()
 
-@router.get("/ml/models/{model_id}")
+@router.get("/ml/models/{model_id}", dependencies=[Depends(get_current_executive)])
 def get_ml_model_detail(model_id: str):
     m = get_model_by_id(model_id)
     if not m:
         raise HTTPException(status_code=404, detail=f"Model {model_id} not found in model registry.")
     return m
 
-@router.get("/ml/training-runs")
+@router.get("/ml/training-runs", dependencies=[Depends(get_current_executive)])
 def list_training_runs():
     return get_training_runs()
 
-@router.post("/ml/training-runs")
+@router.post("/ml/training-runs", dependencies=[Depends(get_current_admin)])
 def trigger_training_run(payload: Dict[str, Any] = Body(...)):
     return initiate_training_run(payload)
 
-@router.get("/ml/evaluations/{evaluation_id}")
+@router.get("/ml/evaluations/{evaluation_id}", dependencies=[Depends(get_current_executive)])
 def get_evaluation_detail(evaluation_id: str):
     ev = get_evaluation_by_id(evaluation_id)
     if not ev:
         raise HTTPException(status_code=404, detail=f"Evaluation report {evaluation_id} not found.")
     return ev
 
-@router.post("/ml/models/{model_id}/approve")
+@router.post("/ml/models/{model_id}/approve", dependencies=[Depends(get_current_admin)])
 def approve_model(model_id: str, payload: Dict[str, Any] = Body(default={})):
     officer_id = payload.get("officer_id", "ADMIN-CHIEF")
     try:
@@ -963,7 +979,7 @@ def approve_model(model_id: str, payload: Dict[str, Any] = Body(default={})):
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
 
-@router.post("/ml/models/{model_id}/rollback")
+@router.post("/ml/models/{model_id}/rollback", dependencies=[Depends(get_current_admin)])
 def rollback_model(model_id: str):
     try:
         return rollback_production_model(model_id)

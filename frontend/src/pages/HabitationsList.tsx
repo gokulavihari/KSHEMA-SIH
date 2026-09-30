@@ -111,7 +111,7 @@ export const HabitationsListView: React.FC = () => {
                   <td className="py-3 px-4 text-slate-400">{hab.dominant_hazard}</td>
                   <td className="py-3 px-4 text-right">
                     <Link
-                      to={`/habitations/${hab.id}`}
+                      to={`/executive/habitations/${hab.id}`}
                       className="inline-flex items-center space-x-1 bg-blue-600/30 text-blue-300 hover:bg-blue-600 hover:text-white px-3 py-1 rounded transition-colors text-xs"
                     >
                       <span>Inspect</span>

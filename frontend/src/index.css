@@ -2,70 +2,65 @@
 @import "tailwindcss";
 
 @theme {
-  --color-command-bg: #0f172a;
-  --color-command-card: #1e293b;
-  --color-command-border: #334155;
-  --color-command-text: #f8fafc;
-  --color-command-muted: #94a3b8;
-  --color-risk-critical: #ef4444;
-  --color-risk-veryhigh: #f97316;
-  --color-risk-high: #f59e0b;
-  --color-risk-moderate: #eab308;
-  --color-risk-low: #22c55e;
-  --color-risk-info: #3b82f6;
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --color-aashray-bg: #0d121d;
+  --color-aashray-surface: #141a29;
+  --color-aashray-border: rgba(255, 255, 255, 0.08);
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 :root {
   color-scheme: dark;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 0;
-  background-color: #0b0f19;
-  color: #f8fafc;
-  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #0d121d;
+  color: #f1f5f9;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Custom Scrollbars */
+/* Custom Minimal Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #0d121d;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #1e293b;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #38bdf8;
 }
 
-/* Leaflet Map Dark Styling Overrides */
+/* Leaflet Dark Map Styling Overrides */
 .leaflet-container {
-  background-color: #0b0f19 !important;
+  background-color: #0d121d !important;
   font-family: inherit !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border: 1px solid #334155 !important;
+  background-color: #141a29 !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 8px !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
 }
 
 .leaflet-popup-tip {
-  background-color: #1e293b !important;
+  background-color: #141a29 !important;
 }
 
-/* OpenStreetMap Dark Command Center Tile Filter */
 .dark-map-tiles {
-  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) !important;
+  filter: brightness(0.7) invert(1) contrast(2.6) hue-rotate(195deg) saturate(0.2) !important;
 }
-

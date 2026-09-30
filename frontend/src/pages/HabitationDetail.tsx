@@ -31,7 +31,7 @@ export const HabitationDetailView: React.FC = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <Link to="/habitations" className="inline-flex items-center space-x-2 text-xs text-blue-400 hover:underline">
+      <Link to="/executive/habitations" className="inline-flex items-center space-x-2 text-xs text-blue-400 hover:underline">
         <ArrowLeft className="w-4 h-4" />
         <span>Back to Habitations Directory</span>
       </Link>

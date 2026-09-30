@@ -41,7 +41,7 @@ export const SafetyPlanModal: React.FC<SafetyPlanModalProps> = ({ alertData, onC
                 )}
               </div>
               <h2 className="text-xl font-extrabold text-slate-100 mt-1">
-                AASHRAY Emergency Safety Plan
+                Kshema Emergency Safety Plan
               </h2>
             </div>
           </div>
@@ -118,7 +118,7 @@ export const SafetyPlanModal: React.FC<SafetyPlanModalProps> = ({ alertData, onC
               </li>
               <li className="flex items-start space-x-2 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/80">
                 <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>
-                <span>Keep your smartphone connected to AASHRAY live location tracking for continuous safety updates.</span>
+                <span>Keep your smartphone connected to Kshema live location tracking for continuous safety updates.</span>
               </li>
             </ul>
           </div>

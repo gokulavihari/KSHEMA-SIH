@@ -1,14 +1,16 @@
-# AASHRAY — AI-Assisted Hazard Assessment, Safe Habitat & Relocation System
+# Kshema
+
+## Disaster Risk & Safe Relocation Intelligence
 
 **Smart India Hackathon 2026 — Problem Statement 26191 (NDRF / Ministry of Home Affairs)**
 
-AASHRAY is a professional, evidence-based GIS decision-support platform designed for operational use by the National Disaster Response Force (NDRF) and State Disaster Management Authorities (SDMAs). It automates multi-hazard risk assessment, dynamic Red-Zone identification, carrying capacity analysis, vulnerability-based prioritization, and multi-site relocation optimization across India.
+Kshema (क्षेम — meaning well-being, safety, welfare, and protection) is a professional, evidence-based GIS decision-support platform designed for operational use by the National Disaster Response Force (NDRF) and State Disaster Management Authorities (SDMA). It automates multi-hazard risk assessment, dynamic Red-Zone identification, carrying capacity analysis, vulnerability-based prioritization, and multi-site relocation optimization across India.
 
 ---
 
 ## Technical Audit & Risk Engine Highlights
 
-- **AASHRAY Multi-Hazard Risk Index v2.0**: Nationwide spatial risk assessment combining global NASA SRTM 30m DEM elevation & slope, Bureau of Indian Standards (IS 1893:2016) seismic zones, coastal surge indexes, and Open-Meteo / IMD live weather telemetry.
+- **Kshema Multi-Hazard Risk Index v2.0**: Nationwide spatial risk assessment combining global NASA SRTM 30m DEM elevation & slope, Bureau of Indian Standards (IS 1893:2016) seismic zones, coastal surge indexes, and Open-Meteo / IMD live weather telemetry.
 - **Traceable Location Assessment**: Accepts arbitrary latitude & longitude selection via map click, geocoding search, or GPS, calculating location-sensitive risk without hardcoded default scores.
 - **Developer Debug Mode**: Toggleable developer debug panel in frontend and API (`?debug=true`) providing raw provider data, normalized factor scores, configured vs effective weights, coverage %, and confidence calculations.
 - **Transparent Data Provenance**: Explicit status badges (`LIVE`, `HISTORICAL`, `MODEL-DERIVED`, `AVAILABLE`, `UNAVAILABLE`, `OUT_OF_COVERAGE`) ensure data source integrity.
@@ -112,6 +114,6 @@ SIH/
 
 ## How to Understand Risk Outputs & Disclaimers
 
-- **Risk Score Range**: 0 to 100 (LOW: 0–20, MODERATE: 20.1–40, HIGH: 40.1–60, VERY HIGH: 60.1–80, CRITICAL: >80).
-- **Decision-Support Prototype Index**: AASHRAY scores are multi-hazard decision-support heuristics designed to prioritize field inspections and emergency planning. They are not legal or official statutory land classifications.
-- **Audit Documentation**: Detailed math formulas, layer coverage rules, and diagnostic findings are documented in [`docs/RISK_ENGINE_AUDIT_REPORT.md`](file:///c:/Users/gokul/Desktop/SIH/docs/RISK_ENGINE_AUDIT_REPORT.md).
+- **Risk Score Range**: 0 to 100 (LOW: 0–20, MODERATE: 20.1–40, HIGH: 40.1–60, EXTREMELY HIGH: 60.1–80, CRITICAL: >80).
+- **Decision-Support Prototype Index**: Kshema scores are multi-hazard decision-support heuristics designed to prioritize field inspections and emergency planning. They are not legal or official statutory land classifications.
+- **Audit Documentation**: Detailed math formulas, layer coverage rules, and diagnostic findings are documented in [`docs/RISK_ENGINE_AUDIT_REPORT.md`](docs/RISK_ENGINE_AUDIT_REPORT.md).

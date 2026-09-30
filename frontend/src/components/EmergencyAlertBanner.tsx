@@ -23,7 +23,7 @@ export const EmergencyAlertBanner: React.FC<EmergencyAlertBannerProps> = ({ onAl
         </div>
 
         <p className="text-sm text-slate-300 leading-relaxed mb-5">
-          Allow AASHRAY to use your location and send emergency disaster alerts when your current area is identified as high risk.
+          Allow Kshema to use your location and send emergency disaster alerts when your current area is identified as high risk.
         </p>
 
         <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 mb-6 space-y-2">

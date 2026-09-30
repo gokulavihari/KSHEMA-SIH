@@ -466,14 +466,14 @@ export const DashboardView: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <Link
-                      to="/gis-map"
+                      to="/executive/map"
                       className="py-2.5 px-3 bg-command-accent hover:bg-command-accent/90 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1.5 shadow"
                     >
                       <span>VIEW ON MAP</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                     <Link
-                      to="/relocation-planner"
+                      to="/executive/relocation-planner"
                       className="py-2.5 px-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1.5"
                     >
                       <span>VIEW FULL PLAN</span>
@@ -496,7 +496,7 @@ export const DashboardView: React.FC = () => {
                 <p className="text-xs text-gray-400 mt-0.5">Inspect hazard vector layers, rivers, roads, and red zones.</p>
               </div>
               <Link
-                to="/gis-map"
+                to="/executive/map"
                 className="px-4 py-2 bg-command-accent hover:bg-command-accent/90 text-white font-semibold text-xs rounded-lg transition-all shadow flex items-center gap-1.5 shrink-0"
               >
                 <span>OPEN MAP</span>

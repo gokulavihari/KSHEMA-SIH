@@ -13,7 +13,7 @@ export const ReportsView: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `aashray_vulnerable_habitations_chamoli.csv`);
+    link.setAttribute('download', `kshema_vulnerable_habitations.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -29,7 +29,7 @@ export const ReportsView: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `aashray_candidate_relocation_sites_chamoli.csv`);
+    link.setAttribute('download', `kshema_candidate_relocation_sites.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

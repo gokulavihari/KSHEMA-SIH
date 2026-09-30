@@ -157,7 +157,7 @@ def find_location_relocation_options(
                 "System spatial coverage is restricted to supported Indian states and territory regions.",
                 "Coordinates outside India return LOCATION_OUTSIDE_SUPPORTED_INDIA_REGION."
             ],
-            "authority_disclaimer": "«AASHRAY provides an explainable research and decision-support prototype that evaluates risky locations and recommends the nearest available relocation candidate using hazard, suitability, capacity, accessibility, and proximity factors. Results are subject to data coverage, routing limitations, field verification, and approval by the appropriate disaster-management authorities.»"
+            "authority_disclaimer": "«Kshema provides an explainable research and decision-support prototype that evaluates risky locations and recommends the nearest available relocation candidate using hazard, suitability, capacity, accessibility, and proximity factors. Results are subject to data coverage, routing limitations, field verification, and approval by the appropriate disaster-management authorities.»"
         }
 
     # Step 3: Candidate Pool Collection
@@ -363,7 +363,7 @@ def find_location_relocation_options(
                 "site_type": "Potential Relocation Zone",
                 "source_type": "GEOSPATIAL_ANALYSIS",
                 "source_url": "https://aashray.sih.gov.in/geospatial-safe-zone",
-                "source_reference": f"AASHRAY Geospatial Safe Terrain Model ({dir_c})",
+                "source_reference": f"Kshema Geospatial Safe Terrain Model ({dir_c})",
                 "candidate_origin": "GEOSPATIAL_ANALYSIS",
                 "is_synthetic": True,
                 "is_fallback": True,
@@ -456,7 +456,7 @@ def find_location_relocation_options(
                 "plan_id": f"PLAN-{uuid.uuid4().hex[:8].upper()}",
                 "limitations": ["No shelter or safe geospatial zone passed safety criteria."],
                 "data_provenance": {
-                    "source_type": "AASHRAY Geospatial Search Engine",
+                    "source_type": "Kshema Geospatial Search Engine",
                     "timestamp": now_str
                 },
                 "authority_disclaimer": "Results subject to DDMA/SDMA field verification."
@@ -553,6 +553,14 @@ def find_location_relocation_options(
         total_allocated += alloc_amt
         utilization_pct = round((alloc_amt / max(1, eff_cap) * 100.0), 1)
 
+        site_lat_val = s_raw.get("latitude")
+        site_lon_val = s_raw.get("longitude")
+        has_valid_coords = (
+            site_lat_val is not None and site_lon_val is not None and
+            -90.0 <= float(site_lat_val) <= 90.0 and -180.0 <= float(site_lon_val) <= 180.0
+        )
+        g_maps_url = f"https://www.google.com/maps/dir/?api=1&destination={site_lat_val},{site_lon_val}" if has_valid_coords else None
+
         site_ref = {
             "site_id": site_id,
             "id": site_id,
@@ -566,6 +574,8 @@ def find_location_relocation_options(
             "is_fallback": s_raw.get("is_fallback", False),
             "latitude": s_raw["latitude"],
             "longitude": s_raw["longitude"],
+            "google_maps_url": g_maps_url,
+            "navigation_url": g_maps_url,
             "district": s_raw.get("district", "District Region"),
             "subdistrict": s_raw.get("subdistrict", "Subdistrict Region"),
             "state": s_raw.get("state", "State Region"),
@@ -613,6 +623,8 @@ def find_location_relocation_options(
             "site_type": s_raw.get("site_type", "Public Shelter"),
             "latitude": s_raw["latitude"],
             "longitude": s_raw["longitude"],
+            "google_maps_url": g_maps_url,
+            "navigation_url": g_maps_url,
             "status": site_status,
             "allocated_population": alloc_amt,
             "site_effective_capacity": eff_cap,
@@ -699,6 +711,8 @@ def find_location_relocation_options(
         "site_type": recommended_site_ref["site_type"],
         "latitude": recommended_site_ref["latitude"],
         "longitude": recommended_site_ref["longitude"],
+        "google_maps_url": recommended_site_ref.get("google_maps_url"),
+        "navigation_url": recommended_site_ref.get("navigation_url"),
         "district": recommended_site_ref["district"],
         "state": recommended_site_ref["state"],
         "status": recommended_site_ref["status"],
@@ -820,5 +834,5 @@ def find_location_relocation_options(
             "Mountain road travel times estimated using 1.40x terrain winding factor.",
             "Candidate selection requires DDMA/SDMA field verification prior to emergency dispatch."
         ],
-        "authority_disclaimer": "«AASHRAY provides an explainable research and decision-support prototype that evaluates risky locations and recommends the nearest available relocation candidate using hazard, suitability, capacity, accessibility, and proximity factors. Results are subject to data coverage, routing limitations, field verification, and approval by the appropriate disaster-management authorities.»"
+        "authority_disclaimer": "«Kshema provides an explainable research and decision-support prototype that evaluates risky locations and recommends the nearest available relocation candidate using hazard, suitability, capacity, accessibility, and proximity factors. Results are subject to data coverage, routing limitations, field verification, and approval by the appropriate disaster-management authorities.»"
     }

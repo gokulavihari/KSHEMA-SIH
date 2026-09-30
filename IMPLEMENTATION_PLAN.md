@@ -1,12 +1,12 @@
-# IMPLEMENTATION PLAN — AASHRAY
-**AI-Assisted Hazard Assessment, Safe Habitat & Relocation System**
+# IMPLEMENTATION PLAN — KSHEMA
+**Disaster Risk & Safe Relocation Intelligence**
 *SIH 2026 Problem Statement 26191 (NDRF / Ministry of Home Affairs)*
 
 ---
 
 ## 1. System Architecture & Pilot Region Overview
 
-AASHRAY is structured as an enterprise-grade multi-tier GIS decision-support system:
+Kshema is structured as an enterprise-grade multi-tier GIS decision-support system:
 - **Pilot Region**: Chamoli District, Uttarakhand (Himalayan multi-hazard prone area with real mountain settlement topology, rivers, roads, and emergency facilities).
 - **Core Workflow**: DETECT → ASSESS → FIND → CAPACITY → PRIORITIZE → ACT
 - **Database Layer**: PostgreSQL + PostGIS (with SQLite + GeoPandas/Shapely spatial engine fallback).

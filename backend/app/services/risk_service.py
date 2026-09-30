@@ -668,7 +668,7 @@ def calculate_location_risk_assessment(
 
     # Developer Debug Information
     debug_info = {
-        "model_name": "AASHRAY Location Risk Assessment Engine v2.1",
+        "model_name": "Kshema Location Risk Assessment Engine v2.1",
         "model_version": "AASHRAY-RISK-v2.1",
         "model_disclaimer": "Prototype heuristic risk index for decision support — Not an official government hazard classification",
         "coordinates": {"latitude": latitude, "longitude": longitude},
@@ -724,7 +724,7 @@ def calculate_location_risk_assessment(
         "exposure_score": exposure_score,
         "vulnerability_score": vulnerability_score,
         "vulnerability_level": vulnerability_level,
-        "vulnerability_label": "AASHRAY Coverage-Aware Vulnerability Assessment",
+        "vulnerability_label": "Kshema Coverage-Aware Vulnerability Assessment",
         "risk_score": risk_score,
         "risk_level": risk_level,
         "confidence": confidence,

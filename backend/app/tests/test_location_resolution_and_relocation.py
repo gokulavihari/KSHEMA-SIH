@@ -111,7 +111,7 @@ def test_50_random_indian_locations_relocation_pipeline():
 
     for idx, (lat, lon) in enumerate(test_coords):
         spatial = perform_spatial_location_analysis(lat, lon)
-        assert spatial["location_info"]["country"] in ["India", "中国", "Indian Region", "Nepal", "Bhutan", "Pakistan", "Bangladesh"]
+        assert spatial["location_info"]["country"] in ["India", "中国", "Indian Region", "Nepal", "नेपाल", "Bhutan", "Pakistan", "Bangladesh"]
 
         
         reloc = find_location_relocation_options(lat, lon, population_to_relocate=500)

@@ -203,8 +203,8 @@ def fetch_nationwide_shelter_candidates(
         candidates.extend(osm_pois)
 
     # 3. Controlled Multi-Directional 8-Point Fallback Grid Generation
-    # Triggers when external candidate count within radius is insufficient
-    if include_unverified and len(candidates) < 3:
+    # Triggers when external candidate count within radius is insufficient or potential candidates needed
+    if include_unverified and (len(candidates) < 3 or not any(c.get("category") == "POTENTIAL_CANDIDATE" for c in candidates)):
         geo_meta = reverse_geocode(latitude, longitude)
         locality = geo_meta.get("locality") or "Regional Sector"
         district = geo_meta.get("district") or "District"
@@ -242,7 +242,7 @@ def fetch_nationwide_shelter_candidates(
                     "latitude": c_lat,
                     "longitude": c_lon,
                     "site_type": fac_type,
-                    "source_type": "ESTIMATED_FALLBACK",
+                    "source_type": "DEMONSTRATION_DATA",
                     "source_url": "https://aashray.sih.gov.in/spatial-grid",
                     "source_reference": f"AASHRAY Multi-Directional Grid Generator ({dir_name})",
                     "candidate_origin": "ESTIMATED_FALLBACK",

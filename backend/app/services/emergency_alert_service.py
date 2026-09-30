@@ -61,9 +61,10 @@ def evaluate_location_emergency_risk(
 
     # 3. Hazard Assessment Evaluation (Section 4, 16)
     risk_assessment = calculate_location_risk_assessment(latitude, longitude)
-    risk_score = risk_assessment.get("composite_risk_score", 0)
-    risk_level = risk_assessment.get("risk_category", "LOW").upper()
-    hazard_type = risk_assessment.get("primary_hazard_type", "FLOOD").upper()
+    risk_score = risk_assessment.get("risk_score") if risk_assessment.get("risk_score") is not None else risk_assessment.get("composite_risk_score", 0)
+    risk_level = str(risk_assessment.get("risk_level") or risk_assessment.get("risk_category") or "LOW").upper()
+    hazard_type = str(risk_assessment.get("dominant_hazard") or risk_assessment.get("primary_hazard_type") or "FLOOD").upper()
+
     data_age_hours = risk_assessment.get("data_age_hours", 0.5)
     last_update = risk_assessment.get("last_data_update", now_iso)
     provider_name = risk_assessment.get("data_provider", "NDMA_CWC_INCOIS_LIVE_GIS")
@@ -154,14 +155,14 @@ def evaluate_location_emergency_risk(
 
     # 8. Web Push Notification Dispatch (Section 8, 10, 11)
     if alert_required and not in_cooldown:
-        title = "🚨 AASHRAY CRITICAL ALERT" if calculated_level == "CRITICAL" else "⚠️ AASHRAY Safety Alert"
+        title = "🚨 KSHEMA CRITICAL ALERT" if calculated_level == "CRITICAL" else "⚠️ KSHEMA Safety Alert"
         
         if calculated_level == "CRITICAL":
             body = f"Critical {hazard_type.lower()} risk detected near your location."
             if distance_km_str:
-                body += f" A potential safer location is identified ~{distance_km_str} away ({direction_str}). Open AASHRAY for details."
+                body += f" A potential safer location is identified ~{distance_km_str} away ({direction_str}). Open KSHEMA for details."
             else:
-                body += " Relocation may be required. Open AASHRAY for your safety plan."
+                body += " Relocation may be required. Open KSHEMA for your safety plan."
         else:
             body = f"High {hazard_type.lower()} risk detected near your current location. Please check recommended safety instructions."
 
@@ -170,7 +171,7 @@ def evaluate_location_emergency_risk(
             "body": body,
             "icon": "/favicon.svg",
             "badge": "/favicon.svg",
-            "tag": f"aashray-alert-{hazard_type.lower()}",
+            "tag": f"kshema-alert-{hazard_type.lower()}",
             "data": {
                 "alert_id": alert_id,
                 "risk_level": calculated_level,
@@ -269,15 +270,15 @@ def simulate_demo_alert(
     alert_id = f"DEMO-{uuid.uuid4().hex[:8].upper()}"
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    title = f"🚨 [DEMO ALERT] AASHRAY CRITICAL ALERT" if risk_level == "CRITICAL" else f"⚠️ [DEMO ALERT] AASHRAY Safety Alert"
-    body = f"[DEMO ALERT — NOT A REAL EMERGENCY] Simulated {risk_level} {hazard_type} warning near your position. Open AASHRAY to verify notification flow."
+    title = f"🚨 [DEMO ALERT] KSHEMA CRITICAL ALERT" if risk_level == "CRITICAL" else f"⚠️ [DEMO ALERT] KSHEMA Safety Alert"
+    body = f"[DEMO ALERT — NOT A REAL EMERGENCY] Simulated {risk_level} {hazard_type} warning near your position. Open KSHEMA to verify notification flow."
 
     payload = {
         "title": title,
         "body": body,
         "icon": "/favicon.svg",
         "badge": "/favicon.svg",
-        "tag": "aashray-demo-alert",
+        "tag": "kshema-demo-alert",
         "data": {
             "alert_id": alert_id,
             "risk_level": risk_level,
@@ -306,7 +307,7 @@ def simulate_demo_alert(
         "trigger_reason": "DEMO ALERT SIMULATOR TRIGGERED BY DEVELOPER",
         "notification_sent": sent_count > 0,
         "sent_at": now_iso,
-        "data_source": "AASHRAY_DEMO_SIMULATOR",
+        "data_source": "KSHEMA_DEMO_SIMULATOR",
         "data_timestamp": now_iso,
         "is_demo": True
     }

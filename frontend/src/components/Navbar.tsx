@@ -18,13 +18,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="font-bold text-lg tracking-wide text-slate-100">AASHRAY</h1>
-            <span className="text-xs px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-700/80 text-emerald-400 font-mono font-medium">
-              NDRF / MHA
+            <h1 className="font-bold text-lg tracking-wide text-slate-100 font-mono">KSHEMA</h1>
+            <span className="text-xs px-2 py-0.5 rounded bg-blue-950/80 border border-blue-700/80 text-blue-300 font-mono font-medium">
+              SDMA / NDRF
             </span>
           </div>
           <p className="text-xs text-slate-400 font-medium">
-            AI-Assisted Hazard Assessment, Safe Habitat & Relocation System
+            Kshema — Disaster Risk & Safe Relocation Intelligence Platform
           </p>
         </div>
       </div>

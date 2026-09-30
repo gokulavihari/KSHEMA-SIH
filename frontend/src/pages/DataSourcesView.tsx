@@ -57,7 +57,7 @@ export const DataSourcesView: React.FC = () => {
               Data Sources & Provenance Metadata
             </h1>
             <p className="text-xs text-gray-400 mt-1">
-              Transparent tracking of India Meteorological Department (IMD), MOSDAC/ISRO, NASA SRTM DEM, OpenStreetMap, Census India, and AASHRAY model logic.
+              Transparent tracking of India Meteorological Department (IMD), MOSDAC/ISRO, NASA SRTM DEM, OpenStreetMap, Census India, and Kshema model logic.
             </p>
           </div>
           <button

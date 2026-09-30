@@ -1,11 +1,11 @@
-# SYSTEM REQUIREMENTS — AASHRAY
-**AI-Assisted Hazard Assessment, Safe Habitat & Relocation System**
+# SYSTEM REQUIREMENTS — KSHEMA
+**Disaster Risk & Safe Relocation Intelligence**
 *Smart India Hackathon 2026 — Problem Statement 26191 (NDRF / Ministry of Home Affairs)*
 
 ---
 
 ## 1. System Overview
-AASHRAY is a professional, evidence-based GIS decision-support platform designed for operational use by the National Disaster Response Force (NDRF) and State Disaster Management Authorities (SDMAs). It automates multi-hazard risk assessment, dynamic Red-Zone identification, carrying capacity analysis, vulnerability-based prioritization, and multi-site relocation optimization.
+Kshema is a professional, evidence-based GIS decision-support platform designed for operational use by the National Disaster Response Force (NDRF) and State Disaster Management Authorities (SDMAs). It automates multi-hazard risk assessment, dynamic Red-Zone identification, carrying capacity analysis, vulnerability-based prioritization, and multi-site relocation optimization.
 
 ---
 

@@ -1,8 +1,9 @@
 import os
 
 class Settings:
-    PROJECT_NAME: str = "AASHRAY - Location-Agnostic AI Risk & Relocation Engine"
+    PROJECT_NAME: str = "Kshema — Disaster Risk & Safe Relocation Intelligence"
     VERSION: str = "2.1.0"
+    PILOT_REGION: str = "Garhwal Himalayan Belt, Uttarakhand"
     API_V1_STR: str = "/api"
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./aashray.db")
     CORS_ORIGINS: list = ["*"]
